@@ -1,0 +1,59 @@
+.contact-form-section {
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.contact-form-title {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #01BCF3;
+  .dzts-highlight {
+    color: #222;
+    font-weight: 900;
+  }
+}
+
+.contact-input,
+.contact-textarea {
+  border: 2px solid #01BCF3;
+  border-radius: 7px;
+  background: #fff;
+  color: #222;
+  font-size: 1.1rem;
+  &::placeholder {
+    color: #bdbdbd;
+    opacity: 1;
+  }
+  &:focus {
+    border-color: #01BCF3;
+    box-shadow: 0 0 0 0.2rem rgba(22,192,242,0.1);
+  }
+}
+
+.contact-btn {
+  border: none;
+  border-radius: 7px;
+  font-size: 1.3rem;
+  transition: background 0.2s;
+  /* Aumentar especificidad para sobrescribir Bootstrap */
+  &.contact-btn:hover {
+    background: #fff !important;
+    color: #01BCF3 !important;
+    border: 1px solid #01BCF3 !important;
+  }
+}
+
+@media (min-width: 992px) {
+  .contact-form-title {
+    font-size: 2.8rem;
+  }
+  .contact-input, .contact-textarea {
+    font-size: 1.2rem;
+  }
+  .contact-btn {
+    font-size: 1.5rem;
+  }
+} 
