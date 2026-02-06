@@ -50,6 +50,7 @@ export default function SearchProperties({
         className="object-cover negative-z"
         sizes="100vw"
         priority
+        fetchPriority="high"
         {...(heroImageLqip
           ? { placeholder: "blur" as const, blurDataURL: heroImageLqip }
           : {})}
