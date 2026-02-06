@@ -130,6 +130,48 @@ curl -s http://localhost:3000/api/revalidate \
 
 A successful response looks like: `{"revalidated":true,"tag":"property"}`
 
+## Analytics
+
+The site supports two analytics providers, both optional and independent of each other.
+
+### Vercel Analytics
+
+Tracks page views and real Core Web Vitals from actual users. No cookies, privacy-friendly, ~1KB script.
+
+**Setup:**
+
+1. Go to your [Vercel project dashboard](https://vercel.com/dashboard)
+2. Click the **Analytics** tab
+3. Click **Enable**
+
+That's it — the `<Analytics />` component is already in the code. It only sends data in production Vercel deployments.
+
+**Free tier:** 2,500 events/month.
+
+### Google Analytics (GA4)
+
+Provides detailed visitor insights, traffic sources, user flows, and property page engagement.
+
+**Setup:**
+
+1. Go to [analytics.google.com](https://analytics.google.com)
+2. Click **Start measuring** → create an Account (e.g., "DZTS Inmobiliaria")
+3. Create a **Property** (e.g., "DZTS Website")
+4. Choose **Web** as the platform and enter your site URL
+5. Copy your **Measurement ID** (looks like `G-XXXXXXXXXX`)
+6. Add it to your environment:
+
+```bash
+# apps/frontend/.env.local
+NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
+```
+
+For Vercel deployments, add the same variable in **Vercel project settings → Environment Variables**.
+
+Google Analytics is conditionally loaded — if the env var is not set, no GA script is included.
+
+**Free tier:** Unlimited for most sites.
+
 ## E2E Tests
 
 The frontend includes Playwright end-to-end smoke tests in `apps/frontend/e2e/`. Tests assert page structure and navigation rather than CMS content, making them resilient to Sanity content changes.

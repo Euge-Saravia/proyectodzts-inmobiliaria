@@ -115,6 +115,7 @@ Each app has its own `.env.local` file with different prefixes (Next.js uses `NE
 | `NEXT_PUBLIC_SANITY_DATASET`     | Sanity dataset name               |
 | `NEXT_PUBLIC_WEB3FORMS_KEY`      | Web3Forms API key for contact form|
 | `NEXT_PUBLIC_SITE_URL`           | Production site URL (for sitemap.xml and robots.txt) |
+| `NEXT_PUBLIC_GA_MEASUREMENT_ID`  | Google Analytics 4 measurement ID (optional, e.g. `G-XXXXXXXXXX`) |
 | `SANITY_REVALIDATE_SECRET`       | HMAC secret for Sanity webhook (server-only, no `NEXT_PUBLIC_` prefix) |
 
 ### Studio (`apps/studio/.env.local`)

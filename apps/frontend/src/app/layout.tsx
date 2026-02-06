@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { cacheLife, cacheTag } from "next/cache";
 import { Inter } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import BootstrapClient from "@/components/BootstrapClient";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -18,6 +20,7 @@ const inter = Inter({
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 
 export const metadata: Metadata = {
   ...(siteUrl ? { metadataBase: new URL(siteUrl) } : {}),
@@ -86,6 +89,8 @@ export default function RootLayout({
           <SiteShell>{children}</SiteShell>
         </Suspense>
         <BootstrapClient />
+        <Analytics />
+        {gaId && <GoogleAnalytics gaId={gaId} />}
       </body>
     </html>
   );
