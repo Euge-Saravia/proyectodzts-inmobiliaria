@@ -473,14 +473,14 @@ export type PROPERTY_QUERY_RESULT = {
 
 // Source: ../frontend/src/app/propiedades/[slug]/page.tsx
 // Variable: PROPERTY_SLUGS_QUERY
-// Query: *[_type == "property" && defined(slug.current) && !(status in ["vendido", "alquilado"])]{    "slug": slug.current  }
+// Query: *[_type == "property" && defined(slug.current)]{    "slug": slug.current  }
 export type PROPERTY_SLUGS_QUERY_RESULT = Array<{
   slug: string | null;
 }>;
 
 // Source: ../frontend/src/app/propiedades/page.tsx
 // Variable: PROPERTIES_QUERY
-// Query: *[_type == "property"    && !(status in ["vendido", "alquilado"])    && ($operationType == "" || operationType == $operationType)    && (count($propertyTypeSlugs) == 0 || propertyType->slug.current in $propertyTypeSlugs)    && (count($citySlugs) == 0 || city->slug.current in $citySlugs)    && (count($roomsList) == 0 || rooms in $roomsList)  ] | order(publishedAt desc)[$start...$end] {    _id,    title,    "slug": slug.current,    subtitle,    price,    currency,    operationType,    "propertyType": propertyType->name,    "city": city->name,    rooms,    "image": images[0] { asset->{ _id, url, metadata { lqip } } }  }
+// Query: *[_type == "property"    && defined(slug.current)    && !(status in ["vendido", "alquilado"])    && ($operationType == "" || operationType == $operationType)    && (count($propertyTypeSlugs) == 0 || propertyType->slug.current in $propertyTypeSlugs)    && (count($citySlugs) == 0 || city->slug.current in $citySlugs)    && (count($roomsList) == 0 || rooms in $roomsList)  ] | order(publishedAt desc)[$start...$end] {    _id,    title,    "slug": slug.current,    subtitle,    price,    currency,    operationType,    "propertyType": propertyType->name,    "city": city->name,    rooms,    "image": images[0] { asset->{ _id, url, metadata { lqip } } }  }
 export type PROPERTIES_QUERY_RESULT = Array<{
   _id: string;
   title: string | null;
@@ -505,7 +505,7 @@ export type PROPERTIES_QUERY_RESULT = Array<{
 
 // Source: ../frontend/src/app/propiedades/page.tsx
 // Variable: COUNT_QUERY
-// Query: count(*[_type == "property"    && !(status in ["vendido", "alquilado"])    && ($operationType == "" || operationType == $operationType)    && (count($propertyTypeSlugs) == 0 || propertyType->slug.current in $propertyTypeSlugs)    && (count($citySlugs) == 0 || city->slug.current in $citySlugs)    && (count($roomsList) == 0 || rooms in $roomsList)  ])
+// Query: count(*[_type == "property"    && defined(slug.current)    && !(status in ["vendido", "alquilado"])    && ($operationType == "" || operationType == $operationType)    && (count($propertyTypeSlugs) == 0 || propertyType->slug.current in $propertyTypeSlugs)    && (count($citySlugs) == 0 || city->slug.current in $citySlugs)    && (count($roomsList) == 0 || rooms in $roomsList)  ])
 export type COUNT_QUERY_RESULT = number;
 
 // Source: ../frontend/src/components/FeaturedProperties.tsx
@@ -756,9 +756,9 @@ declare module "@sanity/client" {
   interface SanityQueries {
     '\n  *[_type == "siteSettings"][0].address\n': MAP_ADDRESS_QUERY_RESULT;
     '\n  *[_type == "property" && slug.current == $slug][0]\n  {\n    title,\n    subtitle,\n    address,\n    description,\n    price,\n    "propertyType": propertyType->name,\n    operationType,\n    status,\n    currency,\n    "city": city->name,\n    "images": images[] { asset->{ _id, url, metadata { lqip } } },\n    "ogImage": images[0],\n    seo {\n      metaTitle,\n      metaDescription,\n      ogImage { asset->{ url } },\n      noIndex\n    }\n  }\n': PROPERTY_QUERY_RESULT;
-    '\n  *[_type == "property" && defined(slug.current) && !(status in ["vendido", "alquilado"])]{\n    "slug": slug.current\n  }\n': PROPERTY_SLUGS_QUERY_RESULT;
-    '\n  *[_type == "property"\n    && !(status in ["vendido", "alquilado"])\n    && ($operationType == "" || operationType == $operationType)\n    && (count($propertyTypeSlugs) == 0 || propertyType->slug.current in $propertyTypeSlugs)\n    && (count($citySlugs) == 0 || city->slug.current in $citySlugs)\n    && (count($roomsList) == 0 || rooms in $roomsList)\n  ] | order(publishedAt desc)[$start...$end] {\n    _id,\n    title,\n    "slug": slug.current,\n    subtitle,\n    price,\n    currency,\n    operationType,\n    "propertyType": propertyType->name,\n    "city": city->name,\n    rooms,\n    "image": images[0] { asset->{ _id, url, metadata { lqip } } }\n  }\n': PROPERTIES_QUERY_RESULT;
-    '\n  count(*[_type == "property"\n    && !(status in ["vendido", "alquilado"])\n    && ($operationType == "" || operationType == $operationType)\n    && (count($propertyTypeSlugs) == 0 || propertyType->slug.current in $propertyTypeSlugs)\n    && (count($citySlugs) == 0 || city->slug.current in $citySlugs)\n    && (count($roomsList) == 0 || rooms in $roomsList)\n  ])\n': COUNT_QUERY_RESULT;
+    '\n  *[_type == "property" && defined(slug.current)]{\n    "slug": slug.current\n  }\n': PROPERTY_SLUGS_QUERY_RESULT;
+    '\n  *[_type == "property"\n    && defined(slug.current)\n    && !(status in ["vendido", "alquilado"])\n    && ($operationType == "" || operationType == $operationType)\n    && (count($propertyTypeSlugs) == 0 || propertyType->slug.current in $propertyTypeSlugs)\n    && (count($citySlugs) == 0 || city->slug.current in $citySlugs)\n    && (count($roomsList) == 0 || rooms in $roomsList)\n  ] | order(publishedAt desc)[$start...$end] {\n    _id,\n    title,\n    "slug": slug.current,\n    subtitle,\n    price,\n    currency,\n    operationType,\n    "propertyType": propertyType->name,\n    "city": city->name,\n    rooms,\n    "image": images[0] { asset->{ _id, url, metadata { lqip } } }\n  }\n': PROPERTIES_QUERY_RESULT;
+    '\n  count(*[_type == "property"\n    && defined(slug.current)\n    && !(status in ["vendido", "alquilado"])\n    && ($operationType == "" || operationType == $operationType)\n    && (count($propertyTypeSlugs) == 0 || propertyType->slug.current in $propertyTypeSlugs)\n    && (count($citySlugs) == 0 || city->slug.current in $citySlugs)\n    && (count($roomsList) == 0 || rooms in $roomsList)\n  ])\n': COUNT_QUERY_RESULT;
     '*\n  [_type == "property" && featured == true && !(status in ["vendido", "alquilado"])]\n  | order(publishedAt desc)[0...6]\n  {\n    _id,\n    title,\n    "slug": slug.current,\n    subtitle,\n    price,\n    currency,\n    operationType,\n    rooms,\n    "city": city->name,\n    "image": images[0] { asset->{ _id, url, metadata { lqip } } }\n  }': FEATURED_QUERY_RESULT;
     '\n  *[_type == "homePage"][0].sections[]{\n    _key,\n    title,\n    anchorId,\n    content,\n    imagePosition,\n    backgroundColor,\n    images[]{ asset->{ url, metadata { lqip } }, alt }\n  }\n': HOME_SECTIONS_QUERY_RESULT;
     '\n  *[_type == "homePage"][0] {\n    heroHeading,\n    heroImage { asset->{ url, metadata { lqip } } },\n    heroLogo { asset->{ url, metadata { lqip, dimensions } }, alt },\n    featuredPropertiesHeading\n  }\n': HOME_CONTENT_QUERY_RESULT;

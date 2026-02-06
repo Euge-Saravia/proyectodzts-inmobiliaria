@@ -3,13 +3,3 @@
   flex-direction: column;
   gap: 0.5rem;
 }
-
-.filters-section--collapsed {
-  display: none;
-}
-
-@media (min-width: 992px) {
-  .filters-section--collapsed {
-    display: flex;
-  }
-}

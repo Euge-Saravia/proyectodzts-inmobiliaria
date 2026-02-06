@@ -8,46 +8,49 @@ export default function PropiedadesLoading() {
       </nav>
       <h1 className="text-center mb-4 fw-bold">Propiedades</h1>
 
-      <div className="properties-layout properties-layout--expanded">
-        <div style={{ gridArea: "filters" }}>
-          <div className="filters-sticky-wrapper">
-            <div className="d-lg-none mb-4 placeholder-glow">
-              <span className="placeholder w-100 d-block" style={{ height: 44 }}></span>
+      <div className="row g-4">
+        {/* Filter sidebar skeleton - desktop only */}
+        <div className="d-none d-lg-block col-lg-3">
+          <div className="bg-light rounded-3 p-3">
+            <div className="placeholder-glow mb-3">
+              <span className="placeholder col-4"></span>
             </div>
-
-            <div className="bg-light rounded-3 p-3">
-              <div className="placeholder-glow mb-3">
-                <span className="placeholder col-4"></span>
-              </div>
-              <div className="placeholder-glow mb-3">
-                <span className="placeholder col-6 d-block mb-2"></span>
-                <span className="placeholder col-8 d-block mb-2"></span>
-                <span className="placeholder col-7 d-block"></span>
-              </div>
-              <div className="placeholder-glow mb-3">
-                <span className="placeholder col-7 d-block mb-2"></span>
-                <span className="placeholder col-9 d-block mb-2"></span>
-                <span className="placeholder col-6 d-block"></span>
-              </div>
-              <div className="placeholder-glow mb-3">
-                <span className="placeholder col-5 d-block mb-2"></span>
-                <span className="placeholder col-8 d-block mb-2"></span>
-                <span className="placeholder col-6 d-block"></span>
-              </div>
-              <div className="placeholder-glow mb-4">
-                <span className="placeholder col-4 d-block mb-2"></span>
-                <span className="placeholder col-7 d-block mb-2"></span>
-                <span className="placeholder col-6 d-block"></span>
-              </div>
-              <div className="placeholder-glow">
-                <span className="placeholder w-100 d-block mb-2" style={{ height: 40 }}></span>
-                <span className="placeholder w-100 d-block" style={{ height: 40 }}></span>
-              </div>
+            <div className="placeholder-glow mb-3">
+              <span className="placeholder col-6 d-block mb-2"></span>
+              <span className="placeholder col-8 d-block mb-2"></span>
+              <span className="placeholder col-7 d-block"></span>
+            </div>
+            <div className="placeholder-glow mb-3">
+              <span className="placeholder col-7 d-block mb-2"></span>
+              <span className="placeholder col-9 d-block mb-2"></span>
+              <span className="placeholder col-6 d-block"></span>
+            </div>
+            <div className="placeholder-glow mb-3">
+              <span className="placeholder col-5 d-block mb-2"></span>
+              <span className="placeholder col-8 d-block mb-2"></span>
+              <span className="placeholder col-6 d-block"></span>
+            </div>
+            <div className="placeholder-glow mb-4">
+              <span className="placeholder col-4 d-block mb-2"></span>
+              <span className="placeholder col-7 d-block mb-2"></span>
+              <span className="placeholder col-6 d-block"></span>
+            </div>
+            <div className="placeholder-glow">
+              <span className="placeholder w-100 d-block mb-2" style={{ height: 40 }}></span>
+              <span className="placeholder w-100 d-block" style={{ height: 40 }}></span>
             </div>
           </div>
         </div>
 
-        <div style={{ gridArea: "main", minWidth: 0 }}>
+        {/* Mobile filter toggle skeleton */}
+        <div className="d-lg-none col-12">
+          <div className="placeholder-glow mb-4">
+            <span className="placeholder w-100 d-block" style={{ height: 44 }}></span>
+          </div>
+        </div>
+
+        {/* Main content skeleton */}
+        <div className="col-12 col-lg-9">
           <div className="d-flex flex-wrap gap-2 mb-3 placeholder-glow">
             <span className="placeholder rounded-pill" style={{ width: 80, height: 26 }}></span>
             <span className="placeholder rounded-pill" style={{ width: 110, height: 26 }}></span>

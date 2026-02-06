@@ -19,6 +19,8 @@ type SearchParams = ReturnType<typeof useSearchParams>;
 
 interface PropertiesFiltersInnerProps extends PropertiesFiltersProps {
   searchParams: SearchParams;
+  isPending: boolean;
+  startTransition: (callback: () => void) => void;
 }
 
 function PropertiesFiltersInner({
@@ -29,21 +31,22 @@ function PropertiesFiltersInner({
   onToggleCollapse,
   onFilteringChange,
   searchParams,
+  isPending,
+  startTransition,
 }: PropertiesFiltersInnerProps) {
   const router = useRouter();
   const [isOpenMobile, setIsOpenMobile] = useState(false);
-  const [isPending, startTransition] = useTransition();
   const initialOperacion = searchParams.get("operacion") || "";
   const initialPropiedad = parseMultiple(searchParams.get("propiedad"));
   const initialLocalidad = parseMultiple(searchParams.get("localidad"));
   const initialDormitorios = parseMultiple(searchParams.get("dormitorios"));
 
-  const [expandedSections, setExpandedSections] = useState(() => ({
-    operacion: Boolean(initialOperacion),
-    propiedad: initialPropiedad.length > 0,
-    localidad: initialLocalidad.length > 0,
+  const [expandedSections, setExpandedSections] = useState({
+    operacion: true,
+    propiedad: true,
+    localidad: true,
     dormitorios: initialDormitorios.length > 0,
-  }));
+  });
 
   const [operacion, setOperacion] = useState(initialOperacion);
   const [propiedad, setPropiedad] = useState<string[]>(initialPropiedad);
@@ -51,8 +54,10 @@ function PropertiesFiltersInner({
   const [dormitorios, setDormitorios] = useState<string[]>(initialDormitorios);
 
   const activeFilterCount =
-    (operacion ? 1 : 0) + propiedad.length + localidad.length + dormitorios.length;
-
+    (operacion ? 1 : 0) +
+    propiedad.length +
+    localidad.length +
+    dormitorios.length;
 
   const toggleSection = (key: keyof typeof expandedSections) => {
     setExpandedSections((prev) => ({
@@ -67,11 +72,10 @@ function PropertiesFiltersInner({
     }
   }, [isPending, onFilteringChange]);
 
-
   const toggleArrayValue = (
     arr: string[],
     value: string,
-    setter: (val: string[]) => void
+    setter: (val: string[]) => void,
   ) => {
     if (arr.includes(value)) {
       setter(arr.filter((v) => v !== value));
@@ -86,7 +90,8 @@ function PropertiesFiltersInner({
     if (operacion) params.set("operacion", operacion);
     if (propiedad.length > 0) params.set("propiedad", propiedad.join(","));
     if (localidad.length > 0) params.set("localidad", localidad.join(","));
-    if (dormitorios.length > 0) params.set("dormitorios", dormitorios.join(","));
+    if (dormitorios.length > 0)
+      params.set("dormitorios", dormitorios.join(","));
 
     const queryString = params.toString();
     startTransition(() => {
@@ -117,12 +122,16 @@ function PropertiesFiltersInner({
           aria-expanded={expandedSections.operacion}
           aria-controls="filters-operacion"
         >
-          <span className="fw-semibold small text-uppercase text-muted">Operación</span>
-          <i className={`bi bi-chevron-${expandedSections.operacion ? "up" : "down"}`}></i>
+          <span className="fw-semibold small text-uppercase text-muted">
+            Operación
+          </span>
+          <i
+            className={`bi bi-chevron-${expandedSections.operacion ? "up" : "down"}`}
+          ></i>
         </button>
         <div
           id="filters-operacion"
-          className={`filters-section ${expandedSections.operacion ? "filters-section--expanded mt-2" : "filters-section--collapsed"}`}
+          className={`filters-section collapse${expandedSections.operacion ? " show mt-2" : ""}`}
         >
           <div className="form-check">
             <input
@@ -175,12 +184,16 @@ function PropertiesFiltersInner({
           aria-expanded={expandedSections.propiedad}
           aria-controls="filters-propiedad"
         >
-          <span className="fw-semibold small text-uppercase text-muted">Tipo de propiedad</span>
-          <i className={`bi bi-chevron-${expandedSections.propiedad ? "up" : "down"}`}></i>
+          <span className="fw-semibold small text-uppercase text-muted">
+            Tipo de propiedad
+          </span>
+          <i
+            className={`bi bi-chevron-${expandedSections.propiedad ? "up" : "down"}`}
+          ></i>
         </button>
         <div
           id="filters-propiedad"
-          className={`filters-section ${expandedSections.propiedad ? "filters-section--expanded mt-2" : "filters-section--collapsed"}`}
+          className={`filters-section collapse${expandedSections.propiedad ? " show mt-2" : ""}`}
         >
           {propertyTypes.map((type) => (
             <div key={type.slug} className="form-check">
@@ -189,9 +202,14 @@ function PropertiesFiltersInner({
                 type="checkbox"
                 id={`propiedad-${type.slug}`}
                 checked={propiedad.includes(type.slug)}
-                onChange={() => toggleArrayValue(propiedad, type.slug, setPropiedad)}
+                onChange={() =>
+                  toggleArrayValue(propiedad, type.slug, setPropiedad)
+                }
               />
-              <label className="form-check-label" htmlFor={`propiedad-${type.slug}`}>
+              <label
+                className="form-check-label"
+                htmlFor={`propiedad-${type.slug}`}
+              >
                 {type.name}
               </label>
             </div>
@@ -211,12 +229,16 @@ function PropertiesFiltersInner({
           aria-expanded={expandedSections.localidad}
           aria-controls="filters-localidad"
         >
-          <span className="fw-semibold small text-uppercase text-muted">Localidad</span>
-          <i className={`bi bi-chevron-${expandedSections.localidad ? "up" : "down"}`}></i>
+          <span className="fw-semibold small text-uppercase text-muted">
+            Localidad
+          </span>
+          <i
+            className={`bi bi-chevron-${expandedSections.localidad ? "up" : "down"}`}
+          ></i>
         </button>
         <div
           id="filters-localidad"
-          className={`filters-section ${expandedSections.localidad ? "filters-section--expanded mt-2" : "filters-section--collapsed"}`}
+          className={`filters-section collapse${expandedSections.localidad ? " show mt-2" : ""}`}
           style={{ maxHeight: 200, overflowY: "auto" }}
         >
           {cities.map((city) => (
@@ -226,9 +248,14 @@ function PropertiesFiltersInner({
                 type="checkbox"
                 id={`localidad-${city.slug}`}
                 checked={localidad.includes(city.slug)}
-                onChange={() => toggleArrayValue(localidad, city.slug, setLocalidad)}
+                onChange={() =>
+                  toggleArrayValue(localidad, city.slug, setLocalidad)
+                }
               />
-              <label className="form-check-label" htmlFor={`localidad-${city.slug}`}>
+              <label
+                className="form-check-label"
+                htmlFor={`localidad-${city.slug}`}
+              >
                 {city.name}
               </label>
             </div>
@@ -248,12 +275,16 @@ function PropertiesFiltersInner({
           aria-expanded={expandedSections.dormitorios}
           aria-controls="filters-dormitorios"
         >
-          <span className="fw-semibold small text-uppercase text-muted">Dormitorios</span>
-          <i className={`bi bi-chevron-${expandedSections.dormitorios ? "up" : "down"}`}></i>
+          <span className="fw-semibold small text-uppercase text-muted">
+            Dormitorios
+          </span>
+          <i
+            className={`bi bi-chevron-${expandedSections.dormitorios ? "up" : "down"}`}
+          ></i>
         </button>
         <div
           id="filters-dormitorios"
-          className={`filters-section ${expandedSections.dormitorios ? "filters-section--expanded mt-2" : "filters-section--collapsed"}`}
+          className={`filters-section collapse${expandedSections.dormitorios ? " show mt-2" : ""}`}
         >
           {roomCounts.map((count) => (
             <div key={count} className="form-check">
@@ -263,10 +294,17 @@ function PropertiesFiltersInner({
                 id={`dormitorios-${count}`}
                 checked={dormitorios.includes(count.toString())}
                 onChange={() =>
-                  toggleArrayValue(dormitorios, count.toString(), setDormitorios)
+                  toggleArrayValue(
+                    dormitorios,
+                    count.toString(),
+                    setDormitorios,
+                  )
                 }
               />
-              <label className="form-check-label" htmlFor={`dormitorios-${count}`}>
+              <label
+                className="form-check-label"
+                htmlFor={`dormitorios-${count}`}
+              >
                 {count} {count === 1 ? "dormitorio" : "dormitorios"}
               </label>
             </div>
@@ -371,9 +409,7 @@ function PropertiesFiltersInner({
           </div>
 
           {/* Actual filter form */}
-          <div className="bg-light rounded-3 p-3">
-            {filterForm}
-          </div>
+          <div className="bg-light rounded-3 p-3">{filterForm}</div>
         </div>
       )}
     </>
@@ -383,8 +419,15 @@ function PropertiesFiltersInner({
 export default function PropertiesFilters(props: PropertiesFiltersProps) {
   const searchParams = useSearchParams();
   const searchKey = searchParams.toString();
+  const [isPending, startTransition] = useTransition();
 
   return (
-    <PropertiesFiltersInner key={searchKey} searchParams={searchParams} {...props} />
+    <PropertiesFiltersInner
+      key={searchKey}
+      searchParams={searchParams}
+      isPending={isPending}
+      startTransition={startTransition}
+      {...props}
+    />
   );
 }
