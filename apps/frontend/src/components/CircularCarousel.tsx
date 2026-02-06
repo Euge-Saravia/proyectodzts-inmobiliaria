@@ -47,6 +47,7 @@ export default function CircularCarousel({ images, id }: CircularCarouselProps) 
                 fill
                 sizes="300px"
                 className="object-fit-cover"
+                loading="lazy"
                 {...(image.asset?.metadata?.lqip
                   ? {
                       placeholder: "blur" as const,

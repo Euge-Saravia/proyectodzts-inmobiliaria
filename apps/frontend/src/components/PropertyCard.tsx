@@ -14,6 +14,7 @@ interface PropertyCardProps {
   lqip?: string | null;
   rooms?: number | null;
   city?: string | null;
+  priority?: boolean;
 }
 
 export default function PropertyCard({
@@ -27,6 +28,7 @@ export default function PropertyCard({
   lqip,
   rooms,
   city,
+  priority,
 }: PropertyCardProps) {
   const imageUrl = image
     ? urlFor(image).height(220).width(400).quality(80).auto("format").url()
@@ -40,7 +42,7 @@ export default function PropertyCard({
         className="card shadow-sm rounded-4 border-0 h-100"
         style={{ maxWidth: 400 }}
       >
-        <div className="position-relative">
+        <div className="position-relative" style={{ aspectRatio: "400/220" }}>
           <Image
             src={imageUrl}
             alt={title || "Property Image"}
@@ -48,6 +50,7 @@ export default function PropertyCard({
             height={220}
             sizes="(min-width: 992px) 33vw, (min-width: 768px) 50vw, 100vw"
             className="card-img-top rounded-top-4 object-fit-cover"
+            priority={priority}
             {...(lqip ? { placeholder: "blur" as const, blurDataURL: lqip } : {})}
           />
           {operationType && (

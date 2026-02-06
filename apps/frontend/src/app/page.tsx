@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { cacheLife, cacheTag } from "next/cache";
 import { defineQuery } from "next-sanity";
+import type { SanityImageSource } from "@sanity/image-url";
 import { sanityFetch } from "@/sanity/lib/live";
+import { urlFor } from "@/sanity/lib/image";
 import {
   getCachedCities,
   getCachedPropertyTypes,
@@ -144,6 +146,16 @@ export default async function Home() {
     ]);
 
   const filterOptions = buildFilterOptions(cities, propertyTypes, roomCounts);
+  const heroImageUrl = urlFor(homeContent!.heroImage! as SanityImageSource)
+    .width(1920)
+    .auto("format")
+    .quality(80)
+    .url();
+  const heroLogoUrl = urlFor(homeContent!.heroLogo! as SanityImageSource)
+    .width(400)
+    .auto("format")
+    .quality(80)
+    .url();
   const organizationJsonLd = organization
     ? {
         "@context": "https://schema.org",
@@ -164,9 +176,9 @@ export default async function Home() {
       <SearchProperties
         filterOptions={filterOptions}
         heroHeading={homeContent!.heroHeading!}
-        heroImageUrl={homeContent!.heroImage!.asset!.url!}
+        heroImageUrl={heroImageUrl}
         heroImageLqip={homeContent!.heroImage!.asset!.metadata?.lqip}
-        heroLogoUrl={homeContent!.heroLogo!.asset!.url!}
+        heroLogoUrl={heroLogoUrl}
         heroLogoAlt={homeContent!.heroLogo!.alt}
       />
       <Suspense

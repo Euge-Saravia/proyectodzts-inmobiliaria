@@ -25,8 +25,8 @@ export async function getCachedHomeSections() {
 const HOME_CONTENT_QUERY = defineQuery(`
   *[_type == "homePage"][0] {
     heroHeading,
-    heroImage { asset->{ url, metadata { lqip } } },
-    heroLogo { asset->{ url, metadata { lqip, dimensions } }, alt },
+    heroImage { asset->{ _id, url, metadata { lqip, dimensions } } },
+    heroLogo { asset->{ _id, url, metadata { lqip, dimensions } }, alt },
     featuredPropertiesHeading
   }
 `);

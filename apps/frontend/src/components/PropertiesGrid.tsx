@@ -25,7 +25,7 @@ export default function PropertiesGrid({ properties }: PropertiesGridProps) {
 
   return (
     <div className="row g-4">
-      {properties.map((property) => (
+      {properties.map((property, index) => (
         <div
           key={property._id}
           className="col-12 col-sm-6 col-xl-4 d-flex justify-content-center"
@@ -41,6 +41,7 @@ export default function PropertiesGrid({ properties }: PropertiesGridProps) {
             lqip={property.lqip}
             rooms={property.rooms}
             city={property.city}
+            priority={index === 0}
           />
         </div>
       ))}

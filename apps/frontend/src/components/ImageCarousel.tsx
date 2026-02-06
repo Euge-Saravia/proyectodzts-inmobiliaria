@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { urlFor } from '@/sanity/lib/image';
-import type { SanityImageSource } from '@sanity/image-url';
-import Image from 'next/image';
-import './ImageCarousel.css';
+import { urlFor } from "@/sanity/lib/image";
+import type { SanityImageSource } from "@sanity/image-url";
+import Image from "next/image";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
+import "./ImageCarousel.css";
 
 interface CarouselImage {
   asset?: SanityImageSource | null;
@@ -17,19 +17,7 @@ interface ImageCarouselProps {
 }
 
 export default function ImageCarousel({ images, title }: ImageCarouselProps) {
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const updatePreference = () => setPrefersReducedMotion(mediaQuery.matches);
-    updatePreference();
-    if (mediaQuery.addEventListener) {
-      mediaQuery.addEventListener('change', updatePreference);
-      return () => mediaQuery.removeEventListener('change', updatePreference);
-    }
-    mediaQuery.addListener(updatePreference);
-    return () => mediaQuery.removeListener(updatePreference);
-  }, []);
+  const prefersReducedMotion = useReducedMotion();
 
   if (images.length === 0) {
     return (

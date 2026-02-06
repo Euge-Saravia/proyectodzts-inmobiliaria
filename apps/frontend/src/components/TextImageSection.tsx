@@ -62,6 +62,7 @@ export default function TextImageSection({
                   fill
                   sizes="300px"
                   className="object-fit-cover"
+                  loading="lazy"
                   {...(primaryImage?.asset?.metadata?.lqip
                     ? {
                         placeholder: "blur" as const,
