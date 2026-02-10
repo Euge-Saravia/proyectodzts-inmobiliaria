@@ -13,7 +13,7 @@ export const propiedadesPageType = defineType({
   fields: [
     defineField({
       name: "heading",
-      title: "Título de la página",
+      title: "Título",
       type: "string",
       group: "content",
       initialValue: "Propiedades",

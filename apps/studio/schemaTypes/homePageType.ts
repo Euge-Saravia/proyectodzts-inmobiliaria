@@ -14,7 +14,7 @@ export const homePageType = defineType({
   fields: [
     defineField({
       name: "heroHeading",
-      title: "Título del Hero",
+      title: "Título",
       type: "string",
       group: "hero",
       initialValue: "Encontrá la propiedad a medida",
@@ -22,7 +22,7 @@ export const homePageType = defineType({
     }),
     defineField({
       name: "heroImage",
-      title: "Imagen de fondo del Hero",
+      title: "Imagen Hero",
       type: "image",
       group: "hero",
       options: { hotspot: true },
@@ -30,7 +30,7 @@ export const homePageType = defineType({
     }),
     defineField({
       name: "heroLogo",
-      title: "Logo del Hero",
+      title: "Logo Hero",
       type: "image",
       group: "hero",
       options: { hotspot: true },
@@ -45,7 +45,7 @@ export const homePageType = defineType({
     }),
     defineField({
       name: "featuredPropertiesHeading",
-      title: "Título de Propiedades Destacadas",
+      title: "Título Propiedades Destacadas",
       type: "string",
       group: "content",
       initialValue: "Propiedades Destacadas",

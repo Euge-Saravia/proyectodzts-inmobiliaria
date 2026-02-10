@@ -137,14 +137,14 @@ export const siteSettingsType = defineType({
     }),
     defineField({
       name: "whatsappNumber",
-      title: "Número de WhatsApp",
+      title: "WhatsApp",
       type: "string",
       group: "contact",
       description: "Número con código de país (ej: 5491155667788)",
     }),
     defineField({
       name: "whatsappMessage",
-      title: "Mensaje predeterminado de WhatsApp",
+      title: "Mensaje WhatsApp",
       type: "text",
       group: "contact",
       rows: 3,
@@ -195,7 +195,7 @@ export const siteSettingsType = defineType({
     // Pie de Página
     defineField({
       name: "footerLinks",
-      title: "Enlaces del Footer",
+      title: "Links Footer",
       type: "array",
       group: "footer",
       of: [
@@ -205,7 +205,7 @@ export const siteSettingsType = defineType({
           fields: [
             defineField({
               name: "label",
-              title: "Etiqueta",
+              title: "Título",
               type: "string",
               validation: (rule) => rule.required(),
             }),
@@ -224,7 +224,7 @@ export const siteSettingsType = defineType({
     }),
     defineField({
       name: "certificationLogos",
-      title: "Logos de Certificaciones",
+      title: "Logos",
       type: "array",
       group: "footer",
       of: [
@@ -241,7 +241,7 @@ export const siteSettingsType = defineType({
             }),
             defineField({
               name: "alt",
-              title: "Texto alternativo",
+              title: "Alt Text",
               type: "string",
               validation: (rule) => rule.required(),
             }),
