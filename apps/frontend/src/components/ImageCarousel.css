@@ -1,4 +1,5 @@
 .carousel-image-container {
   aspect-ratio: 12/5;
   width: 100%;
+  cursor: pointer;
 }

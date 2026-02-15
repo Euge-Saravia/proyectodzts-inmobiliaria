@@ -80,6 +80,7 @@ export default function Footer({
                 alt={logoAlt}
                 width={150}
                 height={60}
+                style={{ width: "auto", height: "auto" }}
               />
             )}
           </div>
