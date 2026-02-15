@@ -259,7 +259,9 @@ export default async function PropertyPage({
         </div>
       </div>
       <MapSection
-        address={property.address}
+        address={[property.address, property.city, "Argentina"]
+          .filter(Boolean)
+          .join(", ")}
         title={`Ubicación de ${property.title || "la propiedad"}`}
       />
     </>

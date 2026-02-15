@@ -40,8 +40,8 @@ export type Property = {
   _createdAt: string;
   _updatedAt: string;
   _rev: string;
-  slug?: Slug;
   title?: string;
+  slug?: Slug;
   subtitle?: string;
   publishedAt?: string;
   description?: Array<{
@@ -572,19 +572,22 @@ export type HOME_SECTIONS_QUERY_RESULT = Array<{
 
 // Source: ../frontend/src/sanity/queries/homePage.ts
 // Variable: HOME_CONTENT_QUERY
-// Query: *[_type == "homePage"][0] {    heroHeading,    heroImage { asset->{ url, metadata { lqip } } },    heroLogo { asset->{ url, metadata { lqip, dimensions } }, alt },    featuredPropertiesHeading  }
+// Query: *[_type == "homePage"][0] {    heroHeading,    heroImage { asset->{ _id, url, metadata { lqip, dimensions } } },    heroLogo { asset->{ _id, url, metadata { lqip, dimensions } }, alt },    featuredPropertiesHeading  }
 export type HOME_CONTENT_QUERY_RESULT = {
   heroHeading: string | null;
   heroImage: {
     asset: {
+      _id: string;
       url: string | null;
       metadata: {
         lqip: string | null;
+        dimensions: SanityImageDimensions | null;
       } | null;
     } | null;
   } | null;
   heroLogo: {
     asset: {
+      _id: string;
       url: string | null;
       metadata: {
         lqip: string | null;
@@ -761,7 +764,7 @@ declare module "@sanity/client" {
     '\n  count(*[_type == "property"\n    && defined(slug.current)\n    && !(status in ["vendido", "alquilado"])\n    && ($operationType == "" || operationType == $operationType)\n    && (count($propertyTypeSlugs) == 0 || propertyType->slug.current in $propertyTypeSlugs)\n    && (count($citySlugs) == 0 || city->slug.current in $citySlugs)\n    && (count($roomsList) == 0 || rooms in $roomsList)\n  ])\n': COUNT_QUERY_RESULT;
     '*\n  [_type == "property" && featured == true && !(status in ["vendido", "alquilado"])]\n  | order(publishedAt desc)[0...6]\n  {\n    _id,\n    title,\n    "slug": slug.current,\n    subtitle,\n    price,\n    currency,\n    operationType,\n    rooms,\n    "city": city->name,\n    "image": images[0] { asset->{ _id, url, metadata { lqip } } }\n  }': FEATURED_QUERY_RESULT;
     '\n  *[_type == "homePage"][0].sections[]{\n    _key,\n    title,\n    anchorId,\n    content,\n    imagePosition,\n    backgroundColor,\n    images[]{ asset->{ url, metadata { lqip } }, alt }\n  }\n': HOME_SECTIONS_QUERY_RESULT;
-    '\n  *[_type == "homePage"][0] {\n    heroHeading,\n    heroImage { asset->{ url, metadata { lqip } } },\n    heroLogo { asset->{ url, metadata { lqip, dimensions } }, alt },\n    featuredPropertiesHeading\n  }\n': HOME_CONTENT_QUERY_RESULT;
+    '\n  *[_type == "homePage"][0] {\n    heroHeading,\n    heroImage { asset->{ _id, url, metadata { lqip, dimensions } } },\n    heroLogo { asset->{ _id, url, metadata { lqip, dimensions } }, alt },\n    featuredPropertiesHeading\n  }\n': HOME_CONTENT_QUERY_RESULT;
     '\n  *[_type == "city"] | order(name asc) { name, "slug": slug.current }\n': CITIES_QUERY_RESULT;
     '\n  *[_type == "propertyTypeCategory"] | order(name asc) { name, "slug": slug.current }\n': PROPERTY_TYPES_QUERY_RESULT;
     '\n  array::unique(*[_type == "property" && defined(rooms) && !(status in ["vendido", "alquilado"])].rooms) | order(@ asc)\n': ROOM_COUNTS_QUERY_RESULT;
