@@ -101,6 +101,10 @@ export const SITE_SETTINGS_QUERY = defineQuery(/* groq */ `
       alt,
       title,
       url
+    },
+    creditLine {
+      text,
+      url
     }
   }
 `);

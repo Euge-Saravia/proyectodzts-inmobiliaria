@@ -117,3 +117,21 @@ a.footer-contact-item:hover {
     text-align: center;
   }
 }
+
+.footer-credit {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  text-align: center;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.footer-credit a {
+  color: rgba(255, 255, 255, 0.5);
+  text-decoration: none;
+}
+
+.footer-credit a:hover {
+  color: rgba(255, 255, 255, 0.8);
+}

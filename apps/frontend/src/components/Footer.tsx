@@ -15,6 +15,7 @@ type FooterProps = {
   phone?: SiteSettings["phone"];
   email?: SiteSettings["email"];
   address?: SiteSettings["address"];
+  creditLine?: SiteSettings["creditLine"];
 };
 
 const platformIcons: Record<string, string> = {
@@ -33,6 +34,7 @@ export default function Footer({
   phone,
   email,
   address,
+  creditLine,
 }: FooterProps) {
   const logoUrl = logo?.asset ? urlFor(logo).width(300).url() : null;
   const logoAlt = logo?.alt || siteName || "";
@@ -144,6 +146,21 @@ export default function Footer({
             })}
           </div>
         </div>
+        {creditLine?.text && (
+          <div className="footer-credit">
+            {creditLine.url ? (
+              <a
+                href={creditLine.url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {creditLine.text}
+              </a>
+            ) : (
+              <span>{creditLine.text}</span>
+            )}
+          </div>
+        )}
       </div>
     </footer>
   );
