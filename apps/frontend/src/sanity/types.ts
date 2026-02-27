@@ -204,6 +204,10 @@ export type SiteSettings = {
     _type: "certificationLogo";
     _key: string;
   }>;
+  creditLine?: {
+    text?: string;
+    url?: string;
+  };
   seo?: Seo;
 };
 
@@ -686,7 +690,7 @@ export type ORGANIZATION_QUERY_RESULT = {
 
 // Source: ../frontend/src/sanity/queries/siteSettings.ts
 // Variable: SITE_SETTINGS_QUERY
-// Query: *[_type == "siteSettings"][0] {    siteName,    logo {      asset->{        _id,        url,        metadata { lqip, dimensions }      },      alt    },    favicon {      asset->{        _id,        url      }    },    mainNavigation[] {      _key,      label,      linkType,      internalPath,      externalUrl,      actionId    },    phone,    email,    address,    whatsappNumber,    whatsappMessage,    socialLinks[] {      _key,      platform,      url    },    footerLinks[] {      _key,      label,      url    },    certificationLogos[] {      _key,      image {        asset->{          _id,          url,          metadata { lqip, dimensions }        }      },      alt,      title,      url    }  }
+// Query: *[_type == "siteSettings"][0] {    siteName,    logo {      asset->{        _id,        url,        metadata { lqip, dimensions }      },      alt    },    favicon {      asset->{        _id,        url      }    },    mainNavigation[] {      _key,      label,      linkType,      internalPath,      externalUrl,      actionId    },    phone,    email,    address,    whatsappNumber,    whatsappMessage,    socialLinks[] {      _key,      platform,      url    },    footerLinks[] {      _key,      label,      url    },    certificationLogos[] {      _key,      image {        asset->{          _id,          url,          metadata { lqip, dimensions }        }      },      alt,      title,      url    },    creditLine {      text,      url    }  }
 export type SITE_SETTINGS_QUERY_RESULT = {
   siteName: string | null;
   logo: {
