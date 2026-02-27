@@ -122,7 +122,8 @@ a.footer-contact-item:hover {
   margin-top: 1rem;
   padding-top: 0.75rem;
   border-top: 1px solid rgba(255, 255, 255, 0.15);
-  text-align: center;
+  display: flex;
+  justify-content: center;
   font-size: 0.75rem;
   color: rgba(255, 255, 255, 0.5);
 }
