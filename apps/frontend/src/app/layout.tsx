@@ -60,6 +60,7 @@ async function SiteShell({ children }: { children: React.ReactNode }) {
         phone={siteSettings?.phone}
         email={siteSettings?.email}
         address={siteSettings?.address}
+        creditLine={siteSettings?.creditLine}
       />
       {siteSettings?.whatsappNumber && (
         <WhatsAppButton

@@ -264,6 +264,26 @@ export const siteSettingsType = defineType({
     }),
 
     defineField({
+      name: "creditLine",
+      title: "Línea de crédito",
+      type: "object",
+      group: "footer",
+      description: "Texto de atribución al pie del footer (ej: desarrollado por...)",
+      fields: [
+        defineField({
+          name: "text",
+          title: "Texto",
+          type: "string",
+        }),
+        defineField({
+          name: "url",
+          title: "URL",
+          type: "url",
+        }),
+      ],
+    }),
+
+    defineField({
       name: "seo",
       title: "SEO",
       type: "seo",
