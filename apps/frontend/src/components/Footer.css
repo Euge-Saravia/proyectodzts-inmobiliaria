@@ -37,7 +37,12 @@ a.footer-contact-item:hover {
 .footer-content {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+}
+
+.footer-logo {
+  flex: 1;
+  display: flex;
+  justify-content: flex-start;
 }
 
 .footer-logo img {
@@ -47,6 +52,7 @@ a.footer-contact-item:hover {
 }
 
 .footer-center {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -92,9 +98,11 @@ a.footer-contact-item:hover {
 
 
 .footer-certifications {
+  flex: 1;
   display: flex;
   gap: 1rem;
   align-items: center;
+  justify-content: flex-end;
 }
 
 .cert-placeholder {
