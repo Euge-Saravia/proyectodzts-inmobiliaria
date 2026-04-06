@@ -1,0 +1,146 @@
+.site-footer {
+  background-color: #3d3d3d;
+  padding: 1.5rem 0;
+}
+
+.footer-contact {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.footer-contact-item {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.875rem;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+a.footer-contact-item:hover {
+  color: #fff;
+}
+
+@media (min-width: 768px) {
+  .footer-contact {
+    flex-direction: row;
+    justify-content: center;
+    gap: 2rem;
+  }
+}
+
+.footer-content {
+  display: flex;
+  align-items: center;
+}
+
+.footer-logo {
+  flex: 1;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.footer-logo img {
+  height: auto;
+  max-height: 50px;
+  width: auto;
+}
+
+.footer-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.back-to-top {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  background: transparent;
+  color: #fff;
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.back-to-top:hover {
+  background-color: #fff;
+  color: #3d3d3d;
+}
+
+.footer-social {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.footer-social a {
+  color: #fff;
+  font-size: 1.25rem;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.footer-social a:hover {
+  opacity: 0.7;
+}
+
+
+.footer-certifications {
+  flex: 1;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.cert-placeholder {
+  width: 50px;
+  height: 50px;
+  background-color: transparent;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1.5rem;
+}
+
+/* Mobile: stacked layout (below md breakpoint) */
+@media (max-width: 767.98px) {
+  .footer-content {
+    flex-direction: column;
+    gap: 1.5rem;
+    text-align: center;
+  }
+}
+
+.footer-credit {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.footer-credit a {
+  color: rgba(255, 255, 255, 0.5);
+  text-decoration: none;
+}
+
+.footer-credit a:hover {
+  color: rgba(255, 255, 255, 0.8);
+}

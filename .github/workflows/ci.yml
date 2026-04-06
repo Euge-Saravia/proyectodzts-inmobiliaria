@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [dev, main]
+
+env:
+  NEXT_PUBLIC_SANITY_PROJECT_ID: "ci-placeholder"
+  NEXT_PUBLIC_SANITY_DATASET: "ci-placeholder"
+  SANITY_STUDIO_PROJECT_ID: "ci-placeholder"
+  SANITY_STUDIO_DATASET: "ci-placeholder"
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Lint frontend
+        run: pnpm --filter frontend lint
+
+      - name: Build frontend
+        run: pnpm --filter frontend build
+
+      - name: Build studio
+        run: pnpm --filter dzts-studio exec sanity build

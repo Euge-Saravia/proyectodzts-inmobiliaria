@@ -1,0 +1,53 @@
+.logo-container {
+  position: relative;
+  width: 12.5rem;
+  height: 6.25rem;
+  margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+  .logo-container {
+    width: 25rem;
+    height: 12.5rem;
+  }
+}
+
+.logo-image {
+  object-fit: contain;
+  object-position: center;
+}
+
+.hero .object-cover {
+  object-fit: cover;
+}
+
+.overlay {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.negative-z {
+  z-index: -1;
+}
+
+.btn-custom {
+  padding: 0.75rem 1.25rem;
+  font-size: 1rem;
+  border-radius: var(--bs-border-radius);
+  color: var(--bs-primary);
+  background-color: var(--bs-secondary);
+  border: 1px solid var(--bs-primary);
+  font-weight: 500;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.btn-custom:hover {
+  background-color: var(--bs-primary);
+  color: var(--bs-secondary);
+}
+
+@media (min-width: 768px) {
+  .btn-custom {
+    padding: 1rem 2rem;
+    font-size: 1rem;
+  }
+}

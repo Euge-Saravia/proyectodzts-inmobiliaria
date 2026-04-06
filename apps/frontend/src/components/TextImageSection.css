@@ -1,0 +1,161 @@
+/* Background variants */
+.section-bg-primary {
+  background-color: var(--bs-primary);
+  color: var(--bs-dark);
+}
+
+.section-bg-primary h2,
+.section-bg-primary h3 {
+  color: var(--bs-dark);
+}
+
+.section-bg-dark {
+  background-color: var(--bs-dark);
+  color: var(--bs-secondary);
+}
+
+.section-bg-dark h2,
+.section-bg-dark h3 {
+  color: var(--bs-primary);
+}
+
+.section-bg-light {
+  background-color: var(--bs-light);
+  color: var(--bs-dark);
+}
+
+.section-bg-light h2,
+.section-bg-light h3 {
+  color: var(--bs-primary);
+}
+
+.section-bg-white {
+  background-color: var(--bs-white);
+  color: var(--bs-dark);
+}
+
+.section-bg-white h2,
+.section-bg-white h3 {
+  color: var(--bs-primary);
+}
+
+/* Circular image container */
+.section-circle-image {
+  aspect-ratio: 1/1;
+  width: 200px;
+  position: relative;
+}
+
+.section-circle-image--single {
+  overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .section-circle-image {
+    width: 300px;
+  }
+}
+
+/* Carousel inside circle */
+.section-circle-image .carousel,
+.section-circle-image .carousel-inner {
+  width: 100%;
+  height: 100%;
+}
+
+.section-circle-image .carousel-inner {
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+/* Carousel indicators below circle */
+.section-carousel-indicators {
+  position: absolute;
+  bottom: -24px;
+  margin-bottom: 0;
+  display: flex;
+  gap: 6px;
+  left: 0;
+  right: 0;
+  width: 100%;
+  justify-content: center;
+  transform: none;
+  margin-left: 0;
+  margin-right: 0;
+  padding: 0;
+}
+
+.section-circle-image .section-carousel-indicators button {
+  width: 8px;
+  height: 8px;
+  min-width: 8px;
+  max-width: 8px;
+  border-radius: 50%;
+  padding: 0;
+  margin: 0;
+  background-color: var(--bs-secondary);
+  opacity: 0.5;
+  border: 0;
+  flex: 0 0 auto;
+}
+
+.section-carousel-indicators button.active {
+  opacity: 1;
+  background-color: var(--bs-primary);
+}
+
+.section-bg-primary .section-circle-image .section-carousel-indicators button {
+  background-color: rgba(255, 255, 255, 0.55);
+}
+
+.section-bg-primary .section-circle-image .section-carousel-indicators button.active {
+  background-color: var(--bs-white);
+}
+
+/* Carousel arrows */
+.section-circle-image .section-carousel-control {
+  width: 34px;
+  opacity: 0.85;
+}
+
+.section-circle-image .section-carousel-control:hover {
+  opacity: 1;
+}
+
+.section-circle-image .carousel-control-prev-icon,
+.section-circle-image .carousel-control-next-icon {
+  width: 18px;
+  height: 18px;
+  filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.35));
+  position: relative;
+  z-index: 1;
+}
+
+.section-circle-image .section-carousel-control::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 26px;
+  height: 26px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.25);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+}
+
+.section-bg-primary,
+.section-bg-dark,
+.section-bg-light,
+.section-bg-white {
+  scroll-margin-top: 60px;
+}
+
+@media (min-width: 992px) {
+  .section-bg-primary,
+  .section-bg-dark,
+  .section-bg-light,
+  .section-bg-white {
+    scroll-margin-top: 60px;
+  }
+}

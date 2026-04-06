@@ -1,0 +1,47 @@
+.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+}
+
+.sticky-header .navbar {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  background-color: var(--header-nav-bg);
+  animation: shrink-navbar linear both;
+  animation-timeline: scroll();
+  animation-range: 0 100px;
+}
+
+@keyframes shrink-navbar {
+  to {
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+  }
+}
+
+.header-logo img {
+  height: auto;
+  width: auto;
+  max-height: 60px;
+  animation: shrink-logo linear both;
+  animation-timeline: scroll();
+  animation-range: 0 100px;
+}
+
+@keyframes shrink-logo {
+  to {
+    max-height: 40px;
+  }
+}
+
+.header-nav .nav-link {
+  color: #ffffff;
+  font-weight: 400;
+  transition: color 0.2s ease;
+}
+
+.header-nav .nav-link:hover,
+.header-nav .nav-link:focus {
+  color: var(--bs-primary);
+}

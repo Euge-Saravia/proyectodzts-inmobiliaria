@@ -1,0 +1,28 @@
+.breadcrumb {
+  font-size: var(--font-size-sm);
+  background: transparent;
+  padding: 0;
+  margin-bottom: 1rem;
+}
+
+.breadcrumb-item a {
+  color: var(--bs-primary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.breadcrumb-item a:hover,
+.breadcrumb-item a:focus {
+  color: var(--bs-link-hover-color);
+  text-decoration: underline;
+}
+
+.breadcrumb-item.active {
+  color: var(--bs-dark);
+}
+
+@media (min-width: 768px) {
+  .breadcrumb {
+    font-size: var(--font-size-base);
+  }
+}

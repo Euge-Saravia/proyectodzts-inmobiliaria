@@ -1,0 +1,55 @@
+name: E2E Tests
+
+on:
+  pull_request:
+    branches: [dev, main]
+    paths:
+      - "apps/frontend/**"
+      - ".github/workflows/e2e.yml"
+
+env:
+  NEXT_PUBLIC_SANITY_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_SANITY_PROJECT_ID }}
+  NEXT_PUBLIC_SANITY_DATASET: ${{ secrets.NEXT_PUBLIC_SANITY_DATASET }}
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Chromium
+        run: pnpm --filter dzts-website exec playwright install --with-deps chromium
+
+      - name: Build frontend
+        run: pnpm --filter dzts-website build
+
+      - name: Run e2e tests
+        run: pnpm --filter dzts-website test:e2e
+
+      - name: Upload test report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: apps/frontend/playwright-report/
+          retention-days: 7
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: test-results
+          path: apps/frontend/test-results/
+          retention-days: 7
+          if-no-files-found: ignore
