@@ -168,6 +168,7 @@ Content updates require a rebuild and re-upload. For content editors, this is fu
 - **MIME types.** Some shared hosts don't serve `.webp`, `.woff2`, `.mjs`, or `.avif` with the right `Content-Type`. If DevTools shows the file downloading with the wrong type, add `AddType` rules to `.htaccess`.
 - **Case-sensitive paths.** Local filesystems are usually case-insensitive; the server likely isn't. `<img src="/Images/foo.jpg">` that works locally may 404 on the server.
 - **Trailing-slash redirect loop.** The `.htaccess` rewrite adds trailing slashes. If the host *also* adds them, you get a redirect loop. Check DevTools → Network for `301 → 301 → 301` on a page and remove one of the rules.
+- **Subdomains pointed at folders under `/public_html/`** (e.g. `bak.dzts.com.ar` → `/public_html/bak/`) inherit non-rewrite directives from the parent `.htaccess` — including `DirectoryIndex index.html`. If the subdomain serves a PHP app (or anything that isn't `index.html`), it must declare its own `.htaccess` with both `RewriteEngine On` (which shadows the parent's rewrites and prevents the canonical-host redirect from sweeping it into `www.dzts.com.ar`) and `DirectoryIndex index.php` (so the bare `/` resolves instead of 403'ing). Without the latter, the inherited `index.html` lookup fails and `Options -Indexes` falls through to Forbidden.
 
 ## Automated Deploys (Sanity publish → shared hosting)
 
