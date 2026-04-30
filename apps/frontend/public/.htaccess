@@ -17,6 +17,9 @@ DirectoryIndex index.html
   # or https on the bare apex) collapses to https://www.dzts.com.ar/<path>
   # in a single 301. Must run before the trailing-slash rule so the
   # redirected URL goes through canonicalization fresh.
+  # Scoped to the apex + www hostnames only so other subdomains
+  # (e.g. bak.dzts.com.ar) are not swept into the redirect.
+  RewriteCond %{HTTP_HOST} ^(www\.)?dzts\.com\.ar$ [NC]
   RewriteCond %{HTTPS} off [OR]
   RewriteCond %{HTTP_HOST} !^www\. [NC]
   RewriteRule ^(.*)$ https://www.dzts.com.ar/$1 [L,R=301]
