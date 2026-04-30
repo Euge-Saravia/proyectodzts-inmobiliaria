@@ -183,25 +183,31 @@ A concurrency group (`deploy-frontend`) coalesces rapid-fire triggers into a sin
 
 ### One-time setup
 
-**1. GitHub Variables** (Settings → Secrets and variables → Actions → Variables):
+Production and preview run against different Sanity projects, so credentials are scoped through GitHub Environments rather than repo-level variables. Each workflow binds to the right environment (`deploy.yml` → `Production`, `e2e.yml` → `Preview`); `ci.yml` uses placeholder values and needs no environment.
 
-| Name | Value |
-|------|-------|
-| `NEXT_PUBLIC_SANITY_PROJECT_ID` | Sanity project ID |
-| `NEXT_PUBLIC_SANITY_DATASET` | Sanity dataset name (typically `production`) |
-| `NEXT_PUBLIC_SITE_URL` | The live site URL, e.g. `https://dzts.com.ar` |
-| `NEXT_PUBLIC_GA_MEASUREMENT_ID` | (optional) GA4 measurement ID |
+**1. GitHub Environments** (Settings → Environments). Create two:
 
-**2. GitHub Secrets** (Settings → Secrets and variables → Actions → Secrets):
+- **`Production`** — used by `deploy.yml`. Restrict deployments to the `main` branch and add a required reviewer for the first few runs as a safety belt.
+- **`Preview`** — used by `e2e.yml` for PR builds. No branch restriction, no required reviewer.
 
-| Name | Value |
-|------|-------|
-| `FTP_SERVER` | FTP host (e.g. `ftp.dzts.com.ar`) |
-| `FTP_USERNAME` | FTP username |
-| `FTP_PASSWORD` | FTP password |
-| `FTP_SERVER_DIR` | Remote directory the site is served from — must end with `/`, e.g. `/public_html/` |
+**2. `Production` environment** — add the following:
 
-**3. GitHub fine-grained PAT for Sanity → GitHub**:
+| Type | Name | Value |
+|------|------|-------|
+| Variable | `NEXT_PUBLIC_SANITY_PROJECT_ID` | Production Sanity project ID |
+| Variable | `NEXT_PUBLIC_SANITY_DATASET` | Sanity dataset name (typically `production`) |
+| Variable | `NEXT_PUBLIC_SITE_URL` | Live site URL, e.g. `https://www.dzts.com.ar` |
+| Variable | `NEXT_PUBLIC_GA_MEASUREMENT_ID` | (optional) GA4 measurement ID |
+| Secret | `FTP_SERVER` | FTP host (e.g. `p1000115.ferozo.com`) |
+| Secret | `FTP_USERNAME` | FTP username |
+| Secret | `FTP_PASSWORD` | FTP password |
+| Secret | `FTP_SERVER_DIR` | Remote webroot, must end with `/` (e.g. `/public_html/`) |
+
+**3. `Preview` environment** — add the non-prod Sanity project's `NEXT_PUBLIC_SANITY_PROJECT_ID` and `NEXT_PUBLIC_SANITY_DATASET` as **Secrets** (`e2e.yml` reads them as `secrets.*`, not `vars.*`).
+
+If any of these names also exist as repo-level Variables/Secrets from earlier setup, delete them — environment values take precedence, but leaving repo-level duplicates around invites silent overrides.
+
+**4. GitHub fine-grained PAT for Sanity → GitHub**:
 
 Create at https://github.com/settings/personal-access-tokens with:
 - Repository access: only this repo
@@ -228,6 +234,16 @@ Once this is in place, publishing in Sanity triggers a new run under GitHub → 
 Editing and publishing a property in Sanity Studio. That's it. A deploy kicks off automatically and finishes in ~2 minutes — the live site reflects the change shortly after.
 
 If a deploy fails, GitHub sends an email to the repo watchers. To retry, open Actions → latest run → "Re-run failed jobs", or just republish in Sanity.
+
+### Vercel preview builds
+
+The repo is also connected to a Vercel project, but production lives on the FTP host — Vercel only serves PR/`dev` previews. To prevent `main` pushes from producing a Vercel deployment that could be mistaken for production, the project's **Settings → Git → Ignored Build Step** is set to:
+
+```bash
+if [ "$VERCEL_GIT_COMMIT_REF" = "main" ]; then exit 0; else exit 1; fi
+```
+
+This skips Vercel builds on `main` (status: "Ignored") while letting `dev` and PR previews build normally. Vercel and GitHub Actions are independent environments — Vercel uses its own env vars defined in the Vercel project; GitHub Actions uses the GitHub Environments described above. Don't expect them to share secrets.
 
 ## Analytics
 
@@ -323,14 +339,7 @@ The workflow uses placeholder environment variables so builds can compile withou
 
 ### E2E Tests
 
-A separate workflow (`.github/workflows/e2e.yml`) runs Playwright tests on PRs to `dev` or `main` when `apps/frontend/` or the workflow file changes. It builds the frontend with real Sanity credentials (from GitHub Secrets) and runs the full e2e suite.
-
-Required GitHub Secrets (Settings > Secrets and variables > Actions):
-
-| Secret | Description |
-|--------|-------------|
-| `NEXT_PUBLIC_SANITY_PROJECT_ID` | Sanity project ID (same as `.env.local`) |
-| `NEXT_PUBLIC_SANITY_DATASET` | Sanity dataset name (same as `.env.local`) |
+A separate workflow (`.github/workflows/e2e.yml`) runs Playwright tests on PRs to `dev` or `main` when `apps/frontend/` or the workflow file changes. It binds to the `Preview` GitHub Environment and builds the frontend with the non-prod Sanity credentials defined there. The required secrets (`NEXT_PUBLIC_SANITY_PROJECT_ID`, `NEXT_PUBLIC_SANITY_DATASET`) live on the `Preview` environment, not at the repo level.
 
 On failure, the HTML report and test results are uploaded as workflow artifacts for debugging.
 
