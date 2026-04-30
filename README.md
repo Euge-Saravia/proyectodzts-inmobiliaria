@@ -245,6 +245,27 @@ if [ "$VERCEL_GIT_COMMIT_REF" = "main" ]; then exit 0; else exit 1; fi
 
 This skips Vercel builds on `main` (status: "Ignored") while letting `dev` and PR previews build normally. Vercel and GitHub Actions are independent environments — Vercel uses its own env vars defined in the Vercel project; GitHub Actions uses the GitHub Environments described above. Don't expect them to share secrets.
 
+### Schema changes (manual studio deploy)
+
+Schema edits in `apps/studio/schemaTypes/` are **not** picked up automatically. The Studio is hosted separately on `*.sanity.studio` (deployed via `sanity deploy`), and the frontend's TypeScript types in `apps/frontend/src/sanity/types.ts` are committed to the repo and consumed at build time. When you change a schema, run this from the repo root in order:
+
+```bash
+pnpm --filter dzts-studio typegen   # regenerate apps/frontend/src/sanity/types.ts
+pnpm --filter dzts-studio deploy    # deploy schema + Studio UI to Sanity
+git add apps/frontend/src/sanity/types.ts apps/studio/schemaTypes/
+git commit -m "schema: <change description>"
+```
+
+Then merge to `main` as usual — the frontend's automated deploy rebuilds against the updated types, and the editor sees the new fields in Studio.
+
+What goes wrong if you skip a step:
+
+- **Skip `typegen`** → frontend keeps building against stale types. New fields lose autocomplete and queries against them may return `undefined` at runtime without TypeScript catching it.
+- **Skip `deploy`** → live site is fine, but content editors won't see new fields in Studio until you run it. They'll keep editing the old shape.
+- **Skip the commit** → `typegen` regenerated `types.ts` locally, but if you don't commit it, the next FTP build (which uses `--frozen-lockfile` and a clean checkout) builds against the *previous* committed types.
+
+This is a manual flow on purpose: schema changes are infrequent and benefit from explicit coordination. If the cadence ever picks up, this can be automated with a `.github/workflows/deploy-studio.yml` that runs on `apps/studio/schemaTypes/**` changes and a `SANITY_AUTH_TOKEN` secret on the `Production` environment.
+
 ## Analytics
 
 The site supports two analytics providers, both optional and independent of each other.
