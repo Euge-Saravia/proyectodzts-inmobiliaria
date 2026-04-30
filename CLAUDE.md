@@ -179,7 +179,7 @@ Two GitHub Actions workflows run on PRs to `dev` and `main`:
 
 - Runs Playwright e2e tests against a production build of the frontend.
 - Only triggers when `apps/frontend/` or the workflow file changes (path filter).
-- Uses real Sanity credentials from GitHub Secrets (`NEXT_PUBLIC_SANITY_PROJECT_ID`, `NEXT_PUBLIC_SANITY_DATASET`) — required for the app to render content.
+- Binds to the GitHub `Preview` environment; reads `NEXT_PUBLIC_SANITY_PROJECT_ID` / `NEXT_PUBLIC_SANITY_DATASET` from that environment's Secrets (non-prod Sanity project). `deploy.yml` binds to `Production` for the real Sanity project + FTP credentials. `ci.yml` is unscoped and uses placeholder values.
 - Uploads `playwright-report/` and `test-results/` as artifacts on failure.
 - The pnpm filter name for the frontend is `dzts-website` (the `name` field in `package.json`), not `frontend`.
 

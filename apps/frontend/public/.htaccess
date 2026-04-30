@@ -13,6 +13,14 @@ DirectoryIndex index.html
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
+  # Force https + www. Any non-canonical scheme/host (http on either name,
+  # or https on the bare apex) collapses to https://www.dzts.com.ar/<path>
+  # in a single 301. Must run before the trailing-slash rule so the
+  # redirected URL goes through canonicalization fresh.
+  RewriteCond %{HTTPS} off [OR]
+  RewriteCond %{HTTP_HOST} !^www\. [NC]
+  RewriteRule ^(.*)$ https://www.dzts.com.ar/$1 [L,R=301]
+
   # If the request is not for an existing file or directory, append a trailing
   # slash so URLs like /propiedades resolve to /propiedades/index.html.
   RewriteCond %{REQUEST_FILENAME} !-f
