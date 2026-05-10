@@ -52,6 +52,8 @@ pnpm deploy   # Deploy to Sanity hosting
 pnpm typegen  # Generate TypeScript types from schema
 ```
 
+Schema changes are a manual three-step flow (`typegen` → `deploy` → commit `types.ts`). See README "Schema changes (manual studio deploy)" for the order and the failure mode for each skipped step. Don't deploy the Studio without committing the regenerated `apps/frontend/src/sanity/types.ts` — the frontend's FTP build runs from a clean checkout against committed types only.
+
 ## Model Delegation
 
 The main Opus agent delegates coding tasks to lighter models via custom agents in `.claude/agents/`. The Explore subagent (built-in, Haiku) handles codebase search and file discovery automatically.

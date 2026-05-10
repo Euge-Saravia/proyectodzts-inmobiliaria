@@ -168,6 +168,7 @@ Content updates require a rebuild and re-upload. For content editors, this is fu
 - **MIME types.** Some shared hosts don't serve `.webp`, `.woff2`, `.mjs`, or `.avif` with the right `Content-Type`. If DevTools shows the file downloading with the wrong type, add `AddType` rules to `.htaccess`.
 - **Case-sensitive paths.** Local filesystems are usually case-insensitive; the server likely isn't. `<img src="/Images/foo.jpg">` that works locally may 404 on the server.
 - **Trailing-slash redirect loop.** The `.htaccess` rewrite adds trailing slashes. If the host *also* adds them, you get a redirect loop. Check DevTools → Network for `301 → 301 → 301` on a page and remove one of the rules.
+- **Subdomains pointed at folders under `/public_html/`** (e.g. `bak.dzts.com.ar` → `/public_html/bak/`) inherit non-rewrite directives from the parent `.htaccess` — including `DirectoryIndex index.html`. If the subdomain serves a PHP app (or anything that isn't `index.html`), it must declare its own `.htaccess` with both `RewriteEngine On` (which shadows the parent's rewrites and prevents the canonical-host redirect from sweeping it into `www.dzts.com.ar`) and `DirectoryIndex index.php` (so the bare `/` resolves instead of 403'ing). Without the latter, the inherited `index.html` lookup fails and `Options -Indexes` falls through to Forbidden.
 
 ## Automated Deploys (Sanity publish → shared hosting)
 
@@ -244,6 +245,27 @@ if [ "$VERCEL_GIT_COMMIT_REF" = "main" ]; then exit 0; else exit 1; fi
 ```
 
 This skips Vercel builds on `main` (status: "Ignored") while letting `dev` and PR previews build normally. Vercel and GitHub Actions are independent environments — Vercel uses its own env vars defined in the Vercel project; GitHub Actions uses the GitHub Environments described above. Don't expect them to share secrets.
+
+### Schema changes (manual studio deploy)
+
+Schema edits in `apps/studio/schemaTypes/` are **not** picked up automatically. The Studio is hosted separately on `*.sanity.studio` (deployed via `sanity deploy`), and the frontend's TypeScript types in `apps/frontend/src/sanity/types.ts` are committed to the repo and consumed at build time. When you change a schema, run this from the repo root in order:
+
+```bash
+pnpm --filter dzts-studio typegen   # regenerate apps/frontend/src/sanity/types.ts
+pnpm --filter dzts-studio deploy    # deploy schema + Studio UI to Sanity
+git add apps/frontend/src/sanity/types.ts apps/studio/schemaTypes/
+git commit -m "schema: <change description>"
+```
+
+Then merge to `main` as usual — the frontend's automated deploy rebuilds against the updated types, and the editor sees the new fields in Studio.
+
+What goes wrong if you skip a step:
+
+- **Skip `typegen`** → frontend keeps building against stale types. New fields lose autocomplete and queries against them may return `undefined` at runtime without TypeScript catching it.
+- **Skip `deploy`** → live site is fine, but content editors won't see new fields in Studio until you run it. They'll keep editing the old shape.
+- **Skip the commit** → `typegen` regenerated `types.ts` locally, but if you don't commit it, the next FTP build (which uses `--frozen-lockfile` and a clean checkout) builds against the *previous* committed types.
+
+This is a manual flow on purpose: schema changes are infrequent and benefit from explicit coordination. If the cadence ever picks up, this can be automated with a `.github/workflows/deploy-studio.yml` that runs on `apps/studio/schemaTypes/**` changes and a `SANITY_AUTH_TOKEN` secret on the `Production` environment.
 
 ## Analytics
 
