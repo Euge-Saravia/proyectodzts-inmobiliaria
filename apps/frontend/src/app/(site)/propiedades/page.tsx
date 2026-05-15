@@ -27,7 +27,7 @@ export async function generateMetadata(): Promise<Metadata> {
 const PROPERTIES_QUERY = defineQuery(`
   *[_type == "property"
     && defined(slug.current)
-    && !(status in ["vendido", "alquilado"])
+    && published != false
   ] | order(publishedAt desc) {
     _id,
     title,
@@ -36,6 +36,7 @@ const PROPERTIES_QUERY = defineQuery(`
     price,
     currency,
     operationType,
+    status,
     "propertyType": propertyType->name,
     "propertyTypeSlug": propertyType->slug.current,
     "city": city->name,

@@ -428,6 +428,10 @@
             },
             {
               "type": "string",
+              "value": "reservado"
+            },
+            {
+              "type": "string",
               "value": "vendido"
             },
             {
@@ -435,6 +439,13 @@
               "value": "alquilado"
             }
           ]
+        },
+        "optional": true
+      },
+      "published": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "boolean"
         },
         "optional": true
       },

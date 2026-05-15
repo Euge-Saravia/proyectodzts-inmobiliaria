@@ -17,6 +17,7 @@ export interface PropertyListItem {
   price?: number | null;
   currency?: string | null;
   operationType?: string | null;
+  status?: string | null;
   propertyType?: string | null;
   propertyTypeSlug?: string | null;
   city?: string | null;

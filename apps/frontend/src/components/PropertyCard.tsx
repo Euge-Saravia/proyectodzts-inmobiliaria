@@ -10,6 +10,7 @@ interface PropertyCardProps {
   price?: number | null;
   currency?: string | null;
   operationType?: string | null;
+  status?: string | null;
   image?: SanityImageSource | null;
   lqip?: string | null;
   rooms?: number | null;
@@ -18,6 +19,12 @@ interface PropertyCardProps {
   priority?: boolean;
 }
 
+const STATUS_LABELS: Record<string, { label: string; badgeClass: string }> = {
+  reservado: { label: "Reservado", badgeClass: "bg-warning text-dark" },
+  vendido: { label: "Vendido", badgeClass: "bg-danger text-white" },
+  alquilado: { label: "Alquilado", badgeClass: "bg-danger text-white" },
+};
+
 export default function PropertyCard({
   title,
   slug,
@@ -25,6 +32,7 @@ export default function PropertyCard({
   price,
   currency = "USD",
   operationType,
+  status,
   image,
   lqip,
   rooms,
@@ -32,6 +40,7 @@ export default function PropertyCard({
   reference,
   priority,
 }: PropertyCardProps) {
+  const statusInfo = status ? STATUS_LABELS[status] : undefined;
   const imageUrl = image
     ? urlFor(image).width(800).height(600).quality(80).auto("format").url()
     : "https://placehold.co/400x300/png";
@@ -59,6 +68,13 @@ export default function PropertyCard({
               className={`position-absolute top-0 end-0 m-2 badge rounded-pill ${operationType === "venta" ? "bg-success" : "bg-warning text-dark"}`}
             >
               {operationType === "venta" ? "Venta" : "Alquiler"}
+            </span>
+          )}
+          {statusInfo && (
+            <span
+              className={`position-absolute top-0 start-0 m-2 badge rounded-pill ${statusInfo.badgeClass}`}
+            >
+              {statusInfo.label}
             </span>
           )}
         </div>

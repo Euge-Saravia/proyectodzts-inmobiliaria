@@ -22,3 +22,12 @@
   border-width: 0.5rem 0.5rem 0 0;
   border-color: #a71d2a transparent transparent transparent;
 }
+
+.status-banner--reservado {
+  background-color: var(--bs-warning, #ffc107);
+  color: #212529;
+}
+
+.status-banner--reservado::after {
+  border-color: #b8860b transparent transparent transparent;
+}

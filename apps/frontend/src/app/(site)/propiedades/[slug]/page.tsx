@@ -96,10 +96,13 @@ export default async function PropertyPage({
     }),
   };
 
-  const isUnavailable =
-    property.status === "vendido" || property.status === "alquilado";
-  const statusLabel =
-    property.status === "vendido" ? "Vendido" : "Alquilado";
+  const statusLabels: Record<string, string> = {
+    reservado: "Reservado",
+    vendido: "Vendido",
+    alquilado: "Alquilado",
+  };
+  const statusLabel = property.status ? statusLabels[property.status] : undefined;
+  const isReservado = property.status === "reservado";
 
   const whatsappNumber = organization?.whatsappNumber;
   const whatsappConsultUrl = whatsappNumber
@@ -163,8 +166,11 @@ export default async function PropertyPage({
             <hr className="border-primary mb-4" />
 
             <div className="position-relative">
-              {isUnavailable && (
-                <div className="status-banner" aria-label={`Propiedad ${statusLabel.toLowerCase()}`}>
+              {statusLabel && (
+                <div
+                  className={`status-banner${isReservado ? " status-banner--reservado" : ""}`}
+                  aria-label={`Propiedad ${statusLabel.toLowerCase()}`}
+                >
                   <span>{statusLabel}</span>
                 </div>
               )}

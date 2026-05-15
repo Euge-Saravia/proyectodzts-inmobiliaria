@@ -79,12 +79,21 @@ export const propertyType = defineType({
       options: {
         list: [
           { title: "Disponible", value: "disponible" },
+          { title: "Reservado", value: "reservado" },
           { title: "Vendido", value: "vendido" },
           { title: "Alquilado", value: "alquilado" },
         ],
         layout: "radio",
       },
       initialValue: "disponible",
+    }),
+    defineField({
+      name: "published",
+      title: "Publicada en el sitio",
+      description:
+        "Desmarcar para ocultar la propiedad del sitio web sin eliminar sus datos.",
+      type: "boolean",
+      initialValue: true,
     }),
     defineField({
       name: "propertyType",

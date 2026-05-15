@@ -37,6 +37,7 @@ export default function PropertiesGrid({ properties }: PropertiesGridProps) {
             price={property.price}
             currency={property.currency}
             operationType={property.operationType}
+            status={property.status}
             image={property.image}
             lqip={property.lqip}
             rooms={property.rooms}

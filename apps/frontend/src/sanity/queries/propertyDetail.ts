@@ -30,7 +30,7 @@ export const PROPERTY_QUERY = defineQuery(`
 `);
 
 export const PROPERTY_SLUGS_QUERY = defineQuery(`
-  *[_type == "property" && defined(slug.current)]{
+  *[_type == "property" && defined(slug.current) && published != false]{
     "slug": slug.current
   }
 `);

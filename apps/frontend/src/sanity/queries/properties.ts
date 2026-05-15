@@ -10,7 +10,7 @@ export const PROPERTY_TYPES_QUERY = defineQuery(`
 `);
 
 export const ROOM_COUNTS_QUERY = defineQuery(`
-  array::unique(*[_type == "property" && defined(rooms) && !(status in ["vendido", "alquilado"])].rooms) | order(@ asc)
+  array::unique(*[_type == "property" && defined(rooms) && published != false].rooms) | order(@ asc)
 `);
 
 export async function getCachedCities() {

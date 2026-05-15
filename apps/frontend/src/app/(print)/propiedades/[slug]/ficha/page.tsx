@@ -64,8 +64,14 @@ export default async function FichaPage({
               </span>
             )}
             {property.status && property.status !== "disponible" && (
-              <span className="badge rounded-pill fs-6 bg-danger text-white">
-                {property.status === "vendido" ? "Vendido" : "Alquilado"}
+              <span
+                className={`badge rounded-pill fs-6 ${property.status === "reservado" ? "bg-warning text-dark" : "bg-danger text-white"}`}
+              >
+                {property.status === "vendido"
+                  ? "Vendido"
+                  : property.status === "alquilado"
+                    ? "Alquilado"
+                    : "Reservado"}
               </span>
             )}
           </div>

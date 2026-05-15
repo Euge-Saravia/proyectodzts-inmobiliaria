@@ -4,7 +4,7 @@ import { sanityFetch } from "@/sanity/lib/live";
 import PropertyCard from "./PropertyCard";
 
 const FEATURED_QUERY = defineQuery(`*
-  [_type == "property" && featured == true && !(status in ["vendido", "alquilado"])]
+  [_type == "property" && featured == true && published != false]
   | order(publishedAt desc)[0...6]
   {
     _id,
@@ -14,6 +14,7 @@ const FEATURED_QUERY = defineQuery(`*
     price,
     currency,
     operationType,
+    status,
     rooms,
     "city": city->name,
     "image": images[0] { asset->{ _id, url, metadata { lqip } } }
@@ -27,6 +28,7 @@ interface FeaturedProperty {
   price: number | null;
   currency: string | null;
   operationType: string | null;
+  status: string | null;
   rooms: number | null;
   city: string | null;
   image: { asset: { _id: string; url: string; metadata: { lqip: string } } | null } | null;
@@ -56,6 +58,7 @@ export default async function FeaturedProperties({
                 price={property.price}
                 currency={property.currency}
                 operationType={property.operationType}
+                status={property.status}
                 image={property.image}
                 lqip={property.image?.asset?.metadata?.lqip}
                 rooms={property.rooms}
