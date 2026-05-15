@@ -31,7 +31,7 @@ export default function ImageCarousel({ images, title }: ImageCarouselProps) {
       <div className="mb-4">
         <div className="carousel-image-container position-relative">
           <Image
-            src="https://placehold.co/1200x500/png"
+            src="https://placehold.co/1200x900/png"
             alt={`${title} - Sin imagen`}
             fill
             sizes="100vw"
@@ -63,8 +63,8 @@ export default function ImageCarousel({ images, title }: ImageCarouselProps) {
       </div>
       <div className="carousel-inner">
         {images.map((image, index) => {
-          const url = image.asset ? urlFor(image.asset).width(1200).height(500).quality(80).auto('format').url()
-            : 'https://placehold.co/1200x500/png';
+          const url = image.asset ? urlFor(image.asset).width(1200).height(900).quality(80).auto('format').url()
+            : 'https://placehold.co/1200x900/png';
 
           return (
             <div key={index} className={`carousel-item ${index === 0 ? 'active' : ''}`}>

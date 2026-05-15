@@ -33,8 +33,8 @@ export default function PropertyCard({
   priority,
 }: PropertyCardProps) {
   const imageUrl = image
-    ? urlFor(image).height(220).width(400).quality(80).auto("format").url()
-    : "https://placehold.co/400x220/png";
+    ? urlFor(image).width(800).height(600).quality(80).auto("format").url()
+    : "https://placehold.co/400x300/png";
 
   const currencySymbol = currency === "ARS" ? "AR$" : "US$";
 
@@ -44,7 +44,7 @@ export default function PropertyCard({
         className="card shadow-sm rounded-4 border-0 h-100 mx-auto"
         style={{ maxWidth: 400 }}
       >
-        <div className="position-relative" style={{ aspectRatio: "400/220" }}>
+        <div className="position-relative" style={{ aspectRatio: "4/3" }}>
           <Image
             src={imageUrl}
             alt={title || "Property Image"}
