@@ -104,6 +104,24 @@ export default async function PropertyPage({
   const statusLabel = property.status ? statusLabels[property.status] : undefined;
   const isReservado = property.status === "reservado";
 
+  const features: { label: string; value: string | number }[] = [
+    property.rooms != null && { label: "Dormitorios", value: property.rooms },
+    property.bathrooms != null && { label: "Baños", value: property.bathrooms },
+    property.garages != null && { label: "Cocheras", value: property.garages },
+    property.sizeCovered != null && {
+      label: "Sup. cubierta",
+      value: `${property.sizeCovered} m²`,
+    },
+    property.sizeLand != null && {
+      label: "Sup. terreno",
+      value: `${property.sizeLand} m²`,
+    },
+    property.sizeTotal != null && {
+      label: "Sup. total",
+      value: `${property.sizeTotal} m²`,
+    },
+  ].filter(Boolean) as { label: string; value: string | number }[];
+
   const whatsappNumber = organization?.whatsappNumber;
   const whatsappConsultUrl = whatsappNumber
     ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Hola, me interesa la propiedad "${property.title}". ¿Podrían darme más información?`)}`
@@ -188,6 +206,20 @@ export default async function PropertyPage({
                 title={property.title ?? ""}
               />
             </div>
+            {features.length > 0 && (
+              <div className="row g-3 my-4 text-center">
+                {features.map((feature) => (
+                  <div className="col-6 col-md-4" key={feature.label}>
+                    <div className="bg-light rounded-3 p-3 h-100">
+                      <div className="fw-bold fs-4 text-primary">
+                        {feature.value}
+                      </div>
+                      <div className="text-muted small">{feature.label}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
             {property.description ? (
               <div className="mb-5">
                 <PortableText value={property.description} />

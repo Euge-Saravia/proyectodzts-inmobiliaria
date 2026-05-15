@@ -53,6 +53,31 @@
   margin-bottom: 0;
 }
 
+.ficha-features {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-top: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+  padding: 0.75rem 0;
+}
+
+.ficha-feature {
+  text-align: center;
+}
+
+.ficha-feature-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #000;
+}
+
+.ficha-feature-label {
+  font-size: 0.8rem;
+  color: #666;
+}
+
 .ficha-images {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

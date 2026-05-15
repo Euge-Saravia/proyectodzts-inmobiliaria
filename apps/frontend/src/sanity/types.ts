@@ -83,6 +83,9 @@ export type Property = {
   rooms?: number;
   bathrooms?: number;
   garages?: number;
+  sizeLand?: number;
+  sizeCovered?: number;
+  sizeTotal?: number;
   size?: number;
   price?: number;
   currency?: "USD" | "ARS";
@@ -567,7 +570,7 @@ export type ROOM_COUNTS_QUERY_RESULT = Array<number | null>;
 
 // Source: ../frontend/src/sanity/queries/propertyDetail.ts
 // Variable: PROPERTY_QUERY
-// Query: *[_type == "property" && slug.current == $slug][0]  {    title,    subtitle,    reference,    address,    description,    price,    "propertyType": propertyType->name,    operationType,    status,    currency,    "city": city->name,    "images": images[] { asset->{ _id, url, metadata { lqip } } },    "ogImage": images[0],    seo {      metaTitle,      metaDescription,      ogImage { asset->{ url } },      noIndex    }  }
+// Query: *[_type == "property" && slug.current == $slug][0]  {    title,    subtitle,    reference,    address,    description,    price,    "propertyType": propertyType->name,    operationType,    status,    currency,    "city": city->name,    rooms,    bathrooms,    garages,    sizeLand,    sizeCovered,    sizeTotal,    "images": images[] { asset->{ _id, url, metadata { lqip } } },    "ogImage": images[0],    seo {      metaTitle,      metaDescription,      ogImage { asset->{ url } },      noIndex    }  }
 export type PROPERTY_QUERY_RESULT = {
   title: string | null;
   subtitle: string | null;
@@ -597,6 +600,12 @@ export type PROPERTY_QUERY_RESULT = {
   status: "alquilado" | "disponible" | "reservado" | "vendido" | null;
   currency: "ARS" | "USD" | null;
   city: string | null;
+  rooms: number | null;
+  bathrooms: number | null;
+  garages: number | null;
+  sizeLand: number | null;
+  sizeCovered: number | null;
+  sizeTotal: number | null;
   images: Array<{
     asset: {
       _id: string;
@@ -784,7 +793,7 @@ declare module "@sanity/client" {
     '\n  *[_type == "city"] | order(name asc) { name, "slug": slug.current }\n': CITIES_QUERY_RESULT;
     '\n  *[_type == "propertyTypeCategory"] | order(name asc) { name, "slug": slug.current }\n': PROPERTY_TYPES_QUERY_RESULT;
     '\n  array::unique(*[_type == "property" && defined(rooms) && published != false].rooms) | order(@ asc)\n': ROOM_COUNTS_QUERY_RESULT;
-    '\n  *[_type == "property" && slug.current == $slug][0]\n  {\n    title,\n    subtitle,\n    reference,\n    address,\n    description,\n    price,\n    "propertyType": propertyType->name,\n    operationType,\n    status,\n    currency,\n    "city": city->name,\n    "images": images[] { asset->{ _id, url, metadata { lqip } } },\n    "ogImage": images[0],\n    seo {\n      metaTitle,\n      metaDescription,\n      ogImage { asset->{ url } },\n      noIndex\n    }\n  }\n': PROPERTY_QUERY_RESULT;
+    '\n  *[_type == "property" && slug.current == $slug][0]\n  {\n    title,\n    subtitle,\n    reference,\n    address,\n    description,\n    price,\n    "propertyType": propertyType->name,\n    operationType,\n    status,\n    currency,\n    "city": city->name,\n    rooms,\n    bathrooms,\n    garages,\n    sizeLand,\n    sizeCovered,\n    sizeTotal,\n    "images": images[] { asset->{ _id, url, metadata { lqip } } },\n    "ogImage": images[0],\n    seo {\n      metaTitle,\n      metaDescription,\n      ogImage { asset->{ url } },\n      noIndex\n    }\n  }\n': PROPERTY_QUERY_RESULT;
     '\n  *[_type == "property" && defined(slug.current) && published != false]{\n    "slug": slug.current\n  }\n': PROPERTY_SLUGS_QUERY_RESULT;
     '\n  *[_type == "propiedadesPage"][0].heading\n': PROPIEDADES_HEADING_QUERY_RESULT;
     '\n  *[_type == "siteSettings"][0].seo {\n    metaTitle,\n    metaDescription,\n    ogImage { asset->{ url } }\n  }\n': SITE_SEO_QUERY_RESULT;

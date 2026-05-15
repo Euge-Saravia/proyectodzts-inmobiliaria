@@ -18,6 +18,12 @@ export const PROPERTY_QUERY = defineQuery(`
     status,
     currency,
     "city": city->name,
+    rooms,
+    bathrooms,
+    garages,
+    sizeLand,
+    sizeCovered,
+    sizeTotal,
     "images": images[] { asset->{ _id, url, metadata { lqip } } },
     "ogImage": images[0],
     seo {
@@ -57,6 +63,12 @@ export interface PropertyDetail {
   status?: string | null;
   currency?: string | null;
   city?: string | null;
+  rooms?: number | null;
+  bathrooms?: number | null;
+  garages?: number | null;
+  sizeLand?: number | null;
+  sizeCovered?: number | null;
+  sizeTotal?: number | null;
   images?: Array<PropertyImage | null> | null;
   ogImage?: SanityImageSource | null;
   seo?: {
