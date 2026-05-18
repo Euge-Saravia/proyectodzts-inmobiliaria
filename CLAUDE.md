@@ -123,10 +123,12 @@ Each app has its own `.env.local` file with different prefixes (Next.js uses `NE
 
 ### Studio (`apps/studio/.env.local`)
 
-| Variable                   | Description               |
-| -------------------------- | ------------------------- |
-| `SANITY_STUDIO_PROJECT_ID` | Sanity project identifier |
-| `SANITY_STUDIO_DATASET`    | Sanity dataset name       |
+| Variable                   | Description                                                                              |
+| -------------------------- | ---------------------------------------------------------------------------------------- |
+| `SANITY_STUDIO_PROJECT_ID` | Sanity project identifier                                                                |
+| `SANITY_STUDIO_DATASET`    | Sanity dataset name                                                                      |
+| `SANITY_STUDIO_HOSTNAME`   | Subdomain on `*.sanity.studio` (required for unattended `sanity deploy` in CI)           |
+| `SANITY_STUDIO_APP_ID`     | App ID from sanity.io/manage → Studios; pins the version channel selector to this app   |
 
 See `.env.example` files in each app for templates.
 
@@ -184,6 +186,13 @@ Two GitHub Actions workflows run on PRs to `dev` and `main`:
 - Binds to the GitHub `Preview` environment; reads `NEXT_PUBLIC_SANITY_PROJECT_ID` / `NEXT_PUBLIC_SANITY_DATASET` from that environment's Secrets (non-prod Sanity project). `deploy.yml` binds to `Production` for the real Sanity project + FTP credentials. `ci.yml` is unscoped and uses placeholder values.
 - Uploads `playwright-report/` and `test-results/` as artifacts on failure.
 - The pnpm filter name for the frontend is `dzts-website` (the `name` field in `package.json`), not `frontend`.
+
+### Deploy Studio (`.github/workflows/deploy-studio.yml`)
+
+- Auto-deploys the Sanity Studio to `*.sanity.studio` on pushes to `main` that touch `apps/studio/**` or `apps/frontend/src/sanity/types.ts`.
+- Binds to the `production` environment; reads `SANITY_STUDIO_HOSTNAME` and `SANITY_STUDIO_APP_ID` as env vars, and `SANITY_DEPLOY_TOKEN` as a secret (generated in sanity.io/manage → API → Tokens with Deploy Studio permission).
+- Runs `pnpm --filter dzts-studio exec sanity deploy` — same rationale as `ci.yml` for using `exec` (bypasses the `prebuild` typegen hook; `sanity deploy` handles schema extraction and build itself).
+- Studio hostname and app ID are read from env vars in `sanity.cli.ts`, so local interactive `sanity deploy` no longer prompts either.
 
 ### Dependabot (`.github/dependabot.yml`)
 

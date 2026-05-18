@@ -43,6 +43,24 @@ export default async function FichaPage({
     (img) => img?.asset?.url
   );
 
+  const features: { label: string; value: string | number }[] = [
+    property.rooms != null && { label: "Dormitorios", value: property.rooms },
+    property.bathrooms != null && { label: "Baños", value: property.bathrooms },
+    property.garages != null && { label: "Cocheras", value: property.garages },
+    property.sizeCovered != null && {
+      label: "Sup. cubierta",
+      value: `${property.sizeCovered} m²`,
+    },
+    property.sizeLand != null && {
+      label: "Sup. terreno",
+      value: `${property.sizeLand} m²`,
+    },
+    property.sizeTotal != null && {
+      label: "Sup. total",
+      value: `${property.sizeTotal} m²`,
+    },
+  ].filter(Boolean) as { label: string; value: string | number }[];
+
   return (
     <>
       <div className="ficha-container">
@@ -64,8 +82,14 @@ export default async function FichaPage({
               </span>
             )}
             {property.status && property.status !== "disponible" && (
-              <span className="badge rounded-pill fs-6 bg-danger text-white">
-                {property.status === "vendido" ? "Vendido" : "Alquilado"}
+              <span
+                className={`badge rounded-pill fs-6 ${property.status === "reservado" ? "bg-warning text-dark" : "bg-danger text-white"}`}
+              >
+                {property.status === "vendido"
+                  ? "Vendido"
+                  : property.status === "alquilado"
+                    ? "Alquilado"
+                    : "Reservado"}
               </span>
             )}
           </div>
@@ -84,6 +108,17 @@ export default async function FichaPage({
               : "Consultar precio"}
           </p>
         </div>
+
+        {features.length > 0 && (
+          <div className="ficha-features">
+            {features.map((feature) => (
+              <div className="ficha-feature" key={feature.label}>
+                <div className="ficha-feature-value">{feature.value}</div>
+                <div className="ficha-feature-label">{feature.label}</div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {validImages.length > 0 && (
           <div className="ficha-images">

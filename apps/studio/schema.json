@@ -428,6 +428,10 @@
             },
             {
               "type": "string",
+              "value": "reservado"
+            },
+            {
+              "type": "string",
               "value": "vendido"
             },
             {
@@ -435,6 +439,13 @@
               "value": "alquilado"
             }
           ]
+        },
+        "optional": true
+      },
+      "published": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "boolean"
         },
         "optional": true
       },
@@ -483,6 +494,27 @@
         "optional": true
       },
       "garages": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "number"
+        },
+        "optional": true
+      },
+      "sizeLand": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "number"
+        },
+        "optional": true
+      },
+      "sizeCovered": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "number"
+        },
+        "optional": true
+      },
+      "sizeTotal": {
         "type": "objectAttribute",
         "value": {
           "type": "number"

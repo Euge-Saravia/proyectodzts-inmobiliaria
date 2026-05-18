@@ -79,12 +79,21 @@ export const propertyType = defineType({
       options: {
         list: [
           { title: "Disponible", value: "disponible" },
+          { title: "Reservado", value: "reservado" },
           { title: "Vendido", value: "vendido" },
           { title: "Alquilado", value: "alquilado" },
         ],
         layout: "radio",
       },
       initialValue: "disponible",
+    }),
+    defineField({
+      name: "published",
+      title: "Publicada en el sitio",
+      description:
+        "Desmarcar para ocultar la propiedad del sitio web sin eliminar sus datos.",
+      type: "boolean",
+      initialValue: true,
     }),
     defineField({
       name: "propertyType",
@@ -125,9 +134,28 @@ export const propertyType = defineType({
       type: "number",
     }),
     defineField({
-      name: "size",
-      title: "Superficie (m²)",
+      name: "sizeLand",
+      title: "Superficie de terreno (m²)",
       type: "number",
+    }),
+    defineField({
+      name: "sizeCovered",
+      title: "Superficie cubierta (m²)",
+      type: "number",
+    }),
+    defineField({
+      name: "sizeTotal",
+      title: "Superficie total (m²)",
+      type: "number",
+    }),
+    defineField({
+      name: "size",
+      title: "Superficie (m²) — legacy",
+      description:
+        "Campo legado. Migrar el valor a Superficie total / cubierta / terreno y dejar este vacío.",
+      type: "number",
+      readOnly: true,
+      hidden: ({ document }) => !document?.size,
     }),
     defineField({
       name: "price",

@@ -1,0 +1,61 @@
+name: Deploy Studio
+
+on:
+  # Auto-deploy whenever main is updated with Studio changes (e.g. after a PR
+  # merge). The `types.ts` path is included because schema changes commit a
+  # regenerated types file alongside, and we want the Studio kept in sync.
+  push:
+    branches: [main]
+    paths:
+      - "apps/studio/**"
+      - "apps/frontend/src/sanity/types.ts"
+      - ".github/workflows/deploy-studio.yml"
+
+  # Manual fallback from the GitHub UI (Actions tab → Run workflow).
+  workflow_dispatch:
+
+# Coalesce rapid-fire triggers into a single deploy. Cancel any in-flight
+# deploy and queue the newest one.
+concurrency:
+  group: deploy-studio
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 10
+
+    env:
+      SANITY_STUDIO_PROJECT_ID: ${{ vars.NEXT_PUBLIC_SANITY_PROJECT_ID }}
+      SANITY_STUDIO_DATASET: ${{ vars.NEXT_PUBLIC_SANITY_DATASET }}
+      SANITY_STUDIO_HOSTNAME: ${{ vars.SANITY_STUDIO_HOSTNAME }}
+      SANITY_STUDIO_APP_ID: ${{ vars.SANITY_STUDIO_APP_ID }}
+      # Required by `sanity deploy` to authenticate against Sanity hosting.
+      # Generate a deploy token in sanity.io/manage → API → Tokens.
+      SANITY_AUTH_TOKEN: ${{ secrets.SANITY_DEPLOY_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # `exec sanity deploy` instead of `pnpm deploy` to bypass the studio's
+      # `predev`/`prebuild` typegen hook. `sanity deploy` already handles
+      # schema extraction, manifest upload, build, and upload in one
+      # authenticated pass.
+      - name: Deploy Studio
+        run: pnpm --filter dzts-studio exec sanity deploy
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "Trigger: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "Studio: https://${{ vars.SANITY_STUDIO_HOSTNAME }}.sanity.studio" >> $GITHUB_STEP_SUMMARY
