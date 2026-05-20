@@ -164,6 +164,23 @@ Sanity Studio project:
 - Feature branches follow the naming convention: `feat/feature-name`
 - Push changes and create PRs using `gh pr create` command
 
+### Releasing dev → main
+
+When opening a release PR from `dev` to `main`, expect conflicts in `apps/studio/package.json` and `pnpm-lock.yaml` (sometimes other files too). Historical `ours`-strategy merge commits in `dev` make git think it has `main`'s state when it doesn't, so each release surfaces the divergence as conflicts.
+
+Resolution (matches the pattern of prior `merge: resolve main into dev for release PR` commits):
+
+```bash
+git checkout dev && git pull
+git merge origin/main           # surfaces conflicts
+git checkout --ours <conflicted-files>  # dev usually wins (newer versions)
+pnpm install --no-frozen-lockfile       # regenerate lockfile cleanly
+git add . && git commit -m "merge: resolve main into dev for release PR"
+git push origin dev             # direct push to dev is OK for this case
+```
+
+After this, the release PR turns `MERGEABLE` and can be merged normally.
+
 ## CI
 
 Two GitHub Actions workflows run on PRs to `dev` and `main`:

@@ -73,6 +73,7 @@ async function MapSectionWrapper() {
   const data = await getCachedMapData();
   return (
     <MapSection
+      id="contacto"
       address={data?.address}
       embedUrl={data?.mapEmbedUrl}
       title="Ubicación de la oficina"
