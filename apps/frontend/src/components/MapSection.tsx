@@ -2,9 +2,10 @@ interface MapSectionProps {
   address?: string | null;
   embedUrl?: string | null;
   title: string;
+  id?: string;
 }
 
-export default function MapSection({ address, embedUrl, title }: MapSectionProps) {
+export default function MapSection({ address, embedUrl, title, id }: MapSectionProps) {
   const mapSrc = embedUrl
     ? embedUrl
     : address
@@ -14,7 +15,7 @@ export default function MapSection({ address, embedUrl, title }: MapSectionProps
   if (!mapSrc) return null;
 
   return (
-    <div className="w-100">
+    <div className="w-100" id={id} style={id ? { scrollMarginTop: "60px" } : undefined}>
       <div style={{ width: "100%", height: "450px" }}>
         <iframe
           src={mapSrc}
