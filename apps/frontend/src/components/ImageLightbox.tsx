@@ -195,6 +195,19 @@ export default function ImageLightbox({
             >
               {imageUrl && (
                 <div className="lightbox-image-container d-flex align-items-center justify-content-center">
+                  {currentImage.lqip && (
+                    <div
+                      className="lightbox-blur"
+                      aria-hidden="true"
+                      style={{
+                        backgroundImage: `url(${currentImage.lqip})`,
+                        opacity: imageLoaded ? 0 : 1,
+                        transition: prefersReducedMotion
+                          ? "none"
+                          : "opacity 0.3s ease",
+                      }}
+                    />
+                  )}
                   <TransformWrapper
                     ref={transformRef}
                     doubleClick={{ mode: "toggle" }}
@@ -205,7 +218,12 @@ export default function ImageLightbox({
                     }}
                   >
                     <TransformComponent
-                      wrapperStyle={{ width: "100%", height: "100%" }}
+                      wrapperStyle={{
+                        width: "100%",
+                        height: "100%",
+                        position: "relative",
+                        zIndex: 1,
+                      }}
                       contentStyle={{
                         width: "100%",
                         height: "100%",
@@ -222,13 +240,10 @@ export default function ImageLightbox({
                           objectFit: "contain",
                           maxWidth: "100%",
                           maxHeight: "100vh",
-                          ...(currentImage.lqip && !imageLoaded
-                            ? {
-                                backgroundImage: `url(${currentImage.lqip})`,
-                                backgroundSize: "cover",
-                                backgroundPosition: "center",
-                              }
-                            : {}),
+                          opacity: imageLoaded ? 1 : 0,
+                          transition: prefersReducedMotion
+                            ? "none"
+                            : "opacity 0.3s ease",
                         }}
                         onLoad={() => setImageLoaded(true)}
                       />
