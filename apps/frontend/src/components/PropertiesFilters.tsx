@@ -41,24 +41,35 @@ function PropertiesFiltersInner({
   const initialPropiedad = parseMultiple(searchParams.get("propiedad"));
   const initialLocalidad = parseMultiple(searchParams.get("localidad"));
   const initialDormitorios = parseMultiple(searchParams.get("dormitorios"));
+  const initialSoloDisponibles = searchParams.get("disponibles") === "1";
+  const initialSupMin = searchParams.get("supmin") || "";
+  const initialSupMax = searchParams.get("supmax") || "";
 
   const [expandedSections, setExpandedSections] = useState({
     operacion: true,
     propiedad: true,
     localidad: true,
     dormitorios: initialDormitorios.length > 0,
+    superficie: initialSupMin !== "" || initialSupMax !== "",
   });
 
   const [operacion, setOperacion] = useState(initialOperacion);
   const [propiedad, setPropiedad] = useState<string[]>(initialPropiedad);
   const [localidad, setLocalidad] = useState<string[]>(initialLocalidad);
   const [dormitorios, setDormitorios] = useState<string[]>(initialDormitorios);
+  const [soloDisponibles, setSoloDisponibles] = useState(
+    initialSoloDisponibles,
+  );
+  const [supMin, setSupMin] = useState(initialSupMin);
+  const [supMax, setSupMax] = useState(initialSupMax);
 
   const activeFilterCount =
     (operacion ? 1 : 0) +
     propiedad.length +
     localidad.length +
-    dormitorios.length;
+    dormitorios.length +
+    (soloDisponibles ? 1 : 0) +
+    (supMin || supMax ? 1 : 0);
 
   const toggleSection = (key: keyof typeof expandedSections) => {
     setExpandedSections((prev) => ({
@@ -93,6 +104,9 @@ function PropertiesFiltersInner({
     if (localidad.length > 0) params.set("localidad", localidad.join(","));
     if (dormitorios.length > 0)
       params.set("dormitorios", dormitorios.join(","));
+    if (soloDisponibles) params.set("disponibles", "1");
+    if (supMin) params.set("supmin", supMin);
+    if (supMax) params.set("supmax", supMax);
 
     const queryString = params.toString();
     startTransition(() => {
@@ -106,6 +120,9 @@ function PropertiesFiltersInner({
     setPropiedad([]);
     setLocalidad([]);
     setDormitorios([]);
+    setSoloDisponibles(false);
+    setSupMin("");
+    setSupMax("");
     startTransition(() => {
       router.push("/propiedades");
     });
@@ -115,6 +132,22 @@ function PropertiesFiltersInner({
   const filterForm = (
     <>
       <ReferenceSearch />
+
+      {/* Solo disponibles - Single checkbox */}
+      <div className="mb-4">
+        <div className="form-check">
+          <input
+            className="form-check-input"
+            type="checkbox"
+            id="solo-disponibles"
+            checked={soloDisponibles}
+            onChange={() => setSoloDisponibles((prev) => !prev)}
+          />
+          <label className="form-check-label" htmlFor="solo-disponibles">
+            Solo disponibles
+          </label>
+        </div>
+      </div>
 
       {/* Operación - Radio buttons */}
       <div className="mb-4">
@@ -315,6 +348,61 @@ function PropertiesFiltersInner({
           {roomCounts.length === 0 && (
             <span className="text-muted small">Sin opciones</span>
           )}
+        </div>
+      </div>
+
+      {/* Superficie - Range inputs */}
+      <div className="mb-4">
+        <button
+          type="button"
+          className="btn btn-link p-0 d-flex align-items-center justify-content-between w-100 text-decoration-none"
+          onClick={() => toggleSection("superficie")}
+          aria-expanded={expandedSections.superficie}
+          aria-controls="filters-superficie"
+        >
+          <span className="fw-semibold small text-uppercase text-muted">
+            Superficie (m²)
+          </span>
+          <i
+            className={`bi bi-chevron-${expandedSections.superficie ? "up" : "down"}`}
+          ></i>
+        </button>
+        <div
+          id="filters-superficie"
+          className={`filters-section collapse${expandedSections.superficie ? " show mt-2" : ""}`}
+        >
+          <div className="row g-2">
+            <div className="col-6">
+              <label htmlFor="superficie-min" className="form-label small mb-1">
+                Desde
+              </label>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                className="form-control form-control-sm"
+                id="superficie-min"
+                placeholder="m²"
+                value={supMin}
+                onChange={(e) => setSupMin(e.target.value)}
+              />
+            </div>
+            <div className="col-6">
+              <label htmlFor="superficie-max" className="form-label small mb-1">
+                Hasta
+              </label>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                className="form-control form-control-sm"
+                id="superficie-max"
+                placeholder="m²"
+                value={supMax}
+                onChange={(e) => setSupMax(e.target.value)}
+              />
+            </div>
+          </div>
         </div>
       </div>
 

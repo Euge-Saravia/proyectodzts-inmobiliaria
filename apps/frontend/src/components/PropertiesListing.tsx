@@ -7,7 +7,11 @@ import PropertiesLayout from "./PropertiesLayout";
 import PropertiesGrid from "./PropertiesGrid";
 import Pagination from "./Pagination";
 import type { FilterOptions } from "@/types/filters";
-import { parseMultiple } from "@/lib/filters";
+import {
+  parseMultiple,
+  parseSurfaceParam,
+  getEffectiveSurface,
+} from "@/lib/filters";
 
 export interface PropertyListItem {
   _id: string;
@@ -23,6 +27,8 @@ export interface PropertyListItem {
   city?: string | null;
   citySlug?: string | null;
   rooms?: number | null;
+  sizeTotal?: number | null;
+  size?: number | null;
   reference?: string | null;
   image?: SanityImageSource | null;
   lqip?: string | null;
@@ -47,6 +53,9 @@ function PropertiesListingInner({
   const roomsList = parseMultiple(searchParams.get("dormitorios"))
     .map((r) => parseInt(r, 10))
     .filter((room) => Number.isFinite(room));
+  const onlyAvailable = searchParams.get("disponibles") === "1";
+  const surfaceMin = parseSurfaceParam(searchParams.get("supmin"));
+  const surfaceMax = parseSurfaceParam(searchParams.get("supmax"));
   const parsedPage = searchParams.get("pagina")
     ? parseInt(searchParams.get("pagina")!, 10)
     : 1;
@@ -70,9 +79,25 @@ function PropertiesListingInner({
         (typeof p.rooms !== "number" || !roomsList.includes(p.rooms))
       )
         return false;
+      if (onlyAvailable && p.status !== "disponible") return false;
+      if (surfaceMin !== null || surfaceMax !== null) {
+        const surface = getEffectiveSurface(p);
+        if (surface === null) return false;
+        if (surfaceMin !== null && surface < surfaceMin) return false;
+        if (surfaceMax !== null && surface > surfaceMax) return false;
+      }
       return true;
     });
-  }, [properties, operationType, propertyTypeSlugs, citySlugs, roomsList]);
+  }, [
+    properties,
+    operationType,
+    propertyTypeSlugs,
+    citySlugs,
+    roomsList,
+    onlyAvailable,
+    surfaceMin,
+    surfaceMax,
+  ]);
 
   const totalCount = filtered.length;
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
@@ -84,6 +109,9 @@ function PropertiesListingInner({
     propiedad: searchParams.get("propiedad") || undefined,
     localidad: searchParams.get("localidad") || undefined,
     dormitorios: searchParams.get("dormitorios") || undefined,
+    disponibles: onlyAvailable ? "1" : undefined,
+    supmin: searchParams.get("supmin") || undefined,
+    supmax: searchParams.get("supmax") || undefined,
   };
 
   return (
