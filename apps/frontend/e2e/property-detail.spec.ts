@@ -46,7 +46,11 @@ test.describe("Property Detail Page", () => {
     await expect(page).toHaveURL(/\/propiedades\/[^/]+\/?$/);
     await page.waitForLoadState("networkidle");
 
-    const jsonLd = page.locator('script[type="application/ld+json"]');
-    await expect(jsonLd).toBeAttached();
+    const jsonLdContents = await page
+      .locator('script[type="application/ld+json"]')
+      .allTextContents();
+    expect(
+      jsonLdContents.some((content) => content.includes("RealEstateListing")),
+    ).toBe(true);
   });
 });

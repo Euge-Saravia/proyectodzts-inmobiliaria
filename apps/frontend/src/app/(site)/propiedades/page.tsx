@@ -42,6 +42,8 @@ const PROPERTIES_QUERY = defineQuery(`
     "city": city->name,
     "citySlug": city->slug.current,
     rooms,
+    sizeTotal,
+    size,
     reference,
     "image": images[0] { asset->{ _id, url, metadata { lqip } } }
   }
