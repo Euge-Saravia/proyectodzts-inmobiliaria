@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useState, type TransitionStartFunction } from "react";
 import type { FilterOption } from "@/types/filters";
 import { parseMultiple } from "@/lib/filters";
 import ReferenceSearch from "./ReferenceSearch";
@@ -13,15 +13,14 @@ interface PropertiesFiltersProps {
   roomCounts: number[];
   isCollapsed: boolean;
   onToggleCollapse: () => void;
-  onFilteringChange?: (isFiltering: boolean) => void;
+  isPending: boolean;
+  startTransition: TransitionStartFunction;
 }
 
 type SearchParams = ReturnType<typeof useSearchParams>;
 
 interface PropertiesFiltersInnerProps extends PropertiesFiltersProps {
   searchParams: SearchParams;
-  isPending: boolean;
-  startTransition: (callback: () => void) => void;
 }
 
 function PropertiesFiltersInner({
@@ -30,7 +29,6 @@ function PropertiesFiltersInner({
   roomCounts,
   isCollapsed,
   onToggleCollapse,
-  onFilteringChange,
   searchParams,
   isPending,
   startTransition,
@@ -77,12 +75,6 @@ function PropertiesFiltersInner({
       [key]: !prev[key],
     }));
   };
-
-  useEffect(() => {
-    if (onFilteringChange) {
-      onFilteringChange(isPending);
-    }
-  }, [isPending, onFilteringChange]);
 
   const toggleArrayValue = (
     arr: string[],
@@ -510,14 +502,11 @@ function PropertiesFiltersInner({
 export default function PropertiesFilters(props: PropertiesFiltersProps) {
   const searchParams = useSearchParams();
   const searchKey = searchParams.toString();
-  const [isPending, startTransition] = useTransition();
 
   return (
     <PropertiesFiltersInner
       key={searchKey}
       searchParams={searchParams}
-      isPending={isPending}
-      startTransition={startTransition}
       {...props}
     />
   );
