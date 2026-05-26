@@ -1,6 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, type RefObject } from "react";
+import {
+  useState,
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useCallback,
+  type RefObject,
+} from "react";
 import { createPortal } from "react-dom";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import type { ReactZoomPanPinchRef } from "react-zoom-pan-pinch";
@@ -144,6 +151,10 @@ export default function ImageLightbox({
     };
   }, [show]);
 
+  const onEscape = useEffectEvent(() => onHide());
+  const onArrowLeft = useEffectEvent(() => goPrev());
+  const onArrowRight = useEffectEvent(() => goNext());
+
   // Focus management + keyboard + focus trap
   useEffect(() => {
     if (!show) return;
@@ -154,19 +165,19 @@ export default function ImageLightbox({
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        onHide();
+        onEscape();
         return;
       }
 
       if (e.key === "ArrowLeft") {
         e.preventDefault();
-        goPrev();
+        onArrowLeft();
         return;
       }
 
       if (e.key === "ArrowRight") {
         e.preventDefault();
-        goNext();
+        onArrowRight();
         return;
       }
 
@@ -193,7 +204,7 @@ export default function ImageLightbox({
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [show, onHide, goPrev, goNext]);
+  }, [show]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
