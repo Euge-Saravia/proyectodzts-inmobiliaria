@@ -38,13 +38,10 @@ export default function FichaActions() {
           Compartir
         </button>
         {copied && (
-          <span
-            className="position-absolute top-100 start-50 translate-middle-x mt-2 badge bg-success text-white px-3 py-2"
-            role="status"
-          >
+          <output className="position-absolute top-100 start-50 translate-middle-x mt-2 badge bg-success text-white px-3 py-2">
             <i className="bi bi-check-circle me-1" aria-hidden="true" />
             Link copiado
-          </span>
+          </output>
         )}
       </div>
     </div>

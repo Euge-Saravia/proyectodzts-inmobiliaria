@@ -16,7 +16,7 @@ export default function GlobalError({
           <p className="fs-5 text-muted mb-4">
             Ocurrió un error inesperado. Podés intentar nuevamente.
           </p>
-          <button onClick={reset} className="btn btn-primary px-4">
+          <button type="button" onClick={reset} className="btn btn-primary px-4">
             Intentar de nuevo
           </button>
         </div>

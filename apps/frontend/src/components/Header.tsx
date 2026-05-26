@@ -18,6 +18,66 @@ type HeaderProps = {
   navigation?: SiteSettings["mainNavigation"];
 };
 
+const getScrollBehavior = () =>
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ? "auto"
+    : "smooth";
+
+interface NavItemLinkProps {
+  item: NavItem;
+  pathname: string;
+  onCollapseNav: () => void;
+}
+
+function NavItemLink({ item, pathname, onCollapseNav }: NavItemLinkProps) {
+  if (item.linkType === "external" && item.externalUrl) {
+    return (
+      <a
+        href={item.externalUrl}
+        className="nav-link"
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={onCollapseNav}
+      >
+        {item.label}
+      </a>
+    );
+  }
+
+  const internalPath = item.internalPath || "/";
+  const anchorId = internalPath.startsWith("/#")
+    ? internalPath.split("#")[1]
+    : null;
+
+  if (anchorId && pathname === "/") {
+    const handleAnchorClick = (e: React.MouseEvent) => {
+      e.preventDefault();
+      onCollapseNav();
+      const target = document.getElementById(anchorId);
+      if (target) {
+        target.scrollIntoView({ behavior: getScrollBehavior(), block: "start" });
+        window.history.replaceState(null, "", `/#${anchorId}`);
+      }
+    };
+
+    return (
+      <a
+        href={internalPath}
+        className="nav-link"
+        onClick={handleAnchorClick}
+      >
+        {item.label}
+      </a>
+    );
+  }
+
+  return (
+    <Link href={internalPath} className="nav-link" onClick={onCollapseNav}>
+      {item.label}
+    </Link>
+  );
+}
+
 export default function Header({ logo, siteName, navigation }: HeaderProps) {
   const navCollapseRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
@@ -27,64 +87,6 @@ export default function Header({ logo, siteName, navigation }: HeaderProps) {
     if (navElement?.classList.contains("show")) {
       navElement.classList.remove("show");
     }
-  };
-
-  const handleNavClick = () => {
-    collapseNav();
-  };
-
-  const getScrollBehavior = () =>
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches
-      ? "auto"
-      : "smooth";
-
-  const handleAnchorClick = (e: React.MouseEvent, targetId: string) => {
-    e.preventDefault();
-    collapseNav();
-    const target = document.getElementById(targetId);
-    if (target) {
-      target.scrollIntoView({ behavior: getScrollBehavior(), block: "start" });
-      window.history.replaceState(null, "", `/#${targetId}`);
-    }
-  };
-
-  const renderNavItem = (item: NavItem) => {
-    if (item.linkType === "external" && item.externalUrl) {
-      return (
-        <a
-          href={item.externalUrl}
-          className="nav-link"
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={handleNavClick}
-        >
-          {item.label}
-        </a>
-      );
-    }
-
-    const internalPath = item.internalPath || "/";
-    const anchorId = internalPath.startsWith("/#")
-      ? internalPath.split("#")[1]
-      : null;
-
-    if (anchorId && pathname === "/") {
-      return (
-        <a
-          href={internalPath}
-          className="nav-link"
-          onClick={(e) => handleAnchorClick(e, anchorId)}
-        >
-          {item.label}
-        </a>
-      );
-    }
-
-    return (
-      <Link href={internalPath} className="nav-link" onClick={handleNavClick}>
-        {item.label}
-      </Link>
-    );
   };
 
   const logoUrl = logo?.asset ? urlFor(logo).width(300).url() : null;
@@ -125,7 +127,11 @@ export default function Header({ logo, siteName, navigation }: HeaderProps) {
               <ul className="navbar-nav header-nav ms-auto mb-2 mb-lg-0 gap-lg-3">
                 {navigation?.map((item) => (
                   <li key={item._key} className="nav-item">
-                    {renderNavItem(item)}
+                    <NavItemLink
+                      item={item}
+                      pathname={pathname}
+                      onCollapseNav={collapseNav}
+                    />
                   </li>
                 ))}
               </ul>
