@@ -8,6 +8,7 @@ export default function ScrollToTopButton() {
 
   return (
     <button
+      type="button"
       className="back-to-top"
       onClick={() => window.scrollTo({ top: 0, behavior: getScrollBehavior() })}
       aria-label="Volver arriba"

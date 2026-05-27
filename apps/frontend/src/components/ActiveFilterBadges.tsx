@@ -1,24 +1,23 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useTransition } from "react";
+import type { TransitionStartFunction } from "react";
 import type { FilterOption } from "@/types/filters";
 import { parseMultiple } from "@/lib/filters";
 
 interface ActiveFilterBadgesProps {
   cities: FilterOption[];
   propertyTypes: FilterOption[];
-  onFilteringChange?: (isFiltering: boolean) => void;
+  startTransition: TransitionStartFunction;
 }
 
 export default function ActiveFilterBadges({
   cities,
   propertyTypes,
-  onFilteringChange,
+  startTransition,
 }: ActiveFilterBadgesProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [isPending, startTransition] = useTransition();
 
   const appliedOperacion = searchParams.get("operacion") || "";
   const appliedPropiedad = parseMultiple(searchParams.get("propiedad"));
@@ -27,12 +26,6 @@ export default function ActiveFilterBadges({
   const appliedDisponibles = searchParams.get("disponibles") === "1";
   const appliedSupMin = searchParams.get("supmin") || "";
   const appliedSupMax = searchParams.get("supmax") || "";
-
-  useEffect(() => {
-    if (onFilteringChange) {
-      onFilteringChange(isPending);
-    }
-  }, [isPending, onFilteringChange]);
 
   const getOperacionLabel = (value: string) => {
     if (value === "venta") return "Venta";
