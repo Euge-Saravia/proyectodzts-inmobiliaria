@@ -59,6 +59,9 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
+          # Ferozo requires FTPS explicit (TLS on the control channel, port 21).
+          # Plain FTP fails with "550 SSL/TLS required on the control channel".
+          protocol: ftps
           local-dir: ./apps/frontend/out/
           server-dir: ${{ secrets.FTP_SERVER_DIR }}
           # Keep files the webserver needs but that aren't in `out/` (e.g. a
