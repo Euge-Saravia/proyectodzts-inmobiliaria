@@ -1,12 +1,10 @@
 import { defineQuery } from "next-sanity";
-import type { SanityImageSource } from "@sanity/image-url";
 import { sanityFetch } from "@/sanity/lib/live";
+import type { FEATURED_QUERY_RESULT } from "@/sanity/types";
 import PropertyCard from "./PropertyCard";
 
-const FEATURED_QUERY = defineQuery(`*
-  [_type == "property" && featured == true && published != false]
-  | order(publishedAt desc)[0...6]
-  {
+const FEATURED_QUERY = defineQuery(`
+  *[_type == "homePage"][0].featuredProperties[]->{
     _id,
     title,
     "slug": slug.current,
@@ -15,31 +13,30 @@ const FEATURED_QUERY = defineQuery(`*
     currency,
     operationType,
     status,
+    published,
     rooms,
     "city": city->name,
     "image": images[0] { asset->{ _id, url, metadata { lqip } } }
   }`);
-
-interface FeaturedProperty {
-  _id: string;
-  title: string | null;
-  slug: string | null;
-  subtitle: string | null;
-  price: number | null;
-  currency: string | null;
-  operationType: string | null;
-  status: string | null;
-  rooms: number | null;
-  city: string | null;
-  image: { asset: { _id: string; url: string; metadata: { lqip: string } } | null } | null;
-}
 
 export default async function FeaturedProperties({
   heading,
 }: {
   heading: string;
 }) {
-  const { data: properties } = await sanityFetch({ query: FEATURED_QUERY }) as { data: FeaturedProperty[] };
+  const { data } = (await sanityFetch({ query: FEATURED_QUERY })) as {
+    data: FEATURED_QUERY_RESULT | null;
+  };
+
+  // Preserve the manual order from the Studio; hide sold/rented/unpublished.
+  const properties = (data ?? [])
+    .filter(
+      (property) =>
+        property.published !== false &&
+        property.status !== "vendido" &&
+        property.status !== "alquilado",
+    )
+    .slice(0, 6);
 
   return (
     <div className="container py-4">

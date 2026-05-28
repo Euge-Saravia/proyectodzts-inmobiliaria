@@ -58,8 +58,11 @@ export const propertyType = defineType({
     defineField({
       name: "images",
       title: "Imágenes",
+      description:
+        "Podés arrastrar varias imágenes a la vez sobre el área de carga, o hacer clic en 'Subir' y seleccionar múltiples archivos con Ctrl/Cmd+click.",
       type: "array",
       of: [{ type: "image" }],
+      options: { layout: "grid" },
     }),
     defineField({
       name: "operationType",
@@ -173,12 +176,6 @@ export const propertyType = defineType({
         ],
       },
       initialValue: "USD",
-    }),
-    defineField({
-      name: "featured",
-      title: "Destacada",
-      type: "boolean",
-      initialValue: false,
     }),
     defineField({
       name: "seo",

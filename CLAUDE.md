@@ -199,6 +199,7 @@ Two GitHub Actions workflows run on PRs to `dev` and `main`:
 ### E2E Tests (`.github/workflows/e2e.yml`)
 
 - Runs Playwright e2e tests against a production build of the frontend.
+- Runs inside the official Playwright container (`mcr.microsoft.com/playwright:<version>-noble`) so browsers + OS deps are preinstalled — there is no `playwright install` step (it used to hang and burn the 15-min job timeout). A small `resolve-playwright` job reads the `@playwright/test` version from `pnpm-lock.yaml` and feeds it as the image tag, keeping the container in sync with the package automatically (Dependabot can't update `container:` image refs — dependabot-core#5819).
 - Only triggers when `apps/frontend/` or the workflow file changes (path filter).
 - Binds to the GitHub `Preview` environment; reads `NEXT_PUBLIC_SANITY_PROJECT_ID` / `NEXT_PUBLIC_SANITY_DATASET` from that environment's Secrets (non-prod Sanity project). `deploy.yml` binds to `Production` for the real Sanity project + FTP credentials. `ci.yml` is unscoped and uses placeholder values.
 - Uploads `playwright-report/` and `test-results/` as artifacts on failure.
@@ -215,7 +216,16 @@ Two GitHub Actions workflows run on PRs to `dev` and `main`:
 
 - Opens weekly PRs (Mondays) for outdated npm dependencies and GitHub Actions versions.
 - npm updates are grouped by ecosystem (`next-ecosystem`, `react`, `sanity`, `eslint`, `bootstrap`) to reduce PR noise. Ungrouped packages get individual PRs.
-- Dependabot PRs target the default branch and trigger the CI workflow, so lint + build are validated before merge.
+- `target-branch: "dev"` is set on both ecosystems so PRs open against `dev` (the `deps → dev → release` flow), not `main`. Dependabot reads this file from the **default branch (`main`)**, so the `target-branch` change only takes effect once it lands on `main` — keep `dev` mirrored so a release merge doesn't revert it.
+- Dependabot is disabled by default on forks; it was enabled manually (Settings → Code security) for this repo. The `dependabot.yml` is inert until that toggle is on.
+- Dependabot PRs trigger the CI + e2e workflows, so lint + build + e2e are validated before merge.
+
+### Code Scanning (CodeQL)
+
+- Enabled via **Default setup** (no `codeql.yml` workflow). Languages: `javascript-typescript` + `actions`; `default` query suite; weekly schedule + on PRs.
+- JS/TS is analyzed "no-build" — CodeQL needs no `pnpm install`, build step, or Sanity env vars, so there's no placeholder-env friction. Don't switch to Advanced setup unless custom queries or build steps are actually needed.
+- Code scanning is free on this public repo. On Dependabot PRs the `GITHUB_TOKEN` is read-only, so alerts may not upload there — internal branches (`feat/*`, `dev`) analyze normally.
+- Results land in the fork's **Security** tab. Keep it informational (not a required check) to avoid blocking PRs on low-severity noise.
 
 ## Page Structure & Routes
 
