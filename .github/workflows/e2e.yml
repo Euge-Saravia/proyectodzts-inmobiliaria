@@ -8,8 +8,36 @@ on:
       - ".github/workflows/e2e.yml"
 
 jobs:
-  e2e:
+  # Reads the @playwright/test version from the lockfile so the e2e job can run
+  # in the matching Playwright container image. This keeps the browser binaries
+  # (baked into the image) in sync with the npm package automatically — Dependabot
+  # bumps the lockfile, the container tag follows. No manual tag bump needed.
+  resolve-playwright:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: version
+        run: |
+          V=$(grep -oP '(?<=@playwright/test@)[0-9]+\.[0-9]+\.[0-9]+' pnpm-lock.yaml | head -1)
+          if [ -z "$V" ]; then
+            echo "Could not resolve @playwright/test version from pnpm-lock.yaml" >&2
+            exit 1
+          fi
+          echo "Resolved Playwright version: $V"
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+
+  e2e:
+    needs: resolve-playwright
+    runs-on: ubuntu-latest
+    # Browsers + OS deps are preinstalled in this image, so there is no
+    # `playwright install` download step (it used to hang and time out the job).
+    # The tag tracks the lockfile via the resolve-playwright job above.
+    container:
+      image: mcr.microsoft.com/playwright:v${{ needs.resolve-playwright.outputs.version }}-noble
     environment: preview
     timeout-minutes: 15
 
@@ -28,9 +56,6 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
-
-      - name: Install Playwright Chromium
-        run: pnpm --filter dzts-website exec playwright install --with-deps chromium
 
       - name: Build frontend
         run: pnpm --filter dzts-website build
