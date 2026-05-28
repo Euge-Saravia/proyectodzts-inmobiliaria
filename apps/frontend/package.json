@@ -8,6 +8,8 @@
     "build": "next build",
     "start": "serve out -l 3000",
     "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
@@ -43,6 +45,7 @@
     "eslint-config-next": "16.2.6",
     "eslint-plugin-react": "^7.37.5",
     "serve": "^14.2.4",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.7"
   }
 }

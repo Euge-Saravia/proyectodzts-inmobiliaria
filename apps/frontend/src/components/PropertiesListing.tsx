@@ -11,6 +11,8 @@ import {
   parseMultiple,
   parseSurfaceParam,
   getEffectiveSurface,
+  sortProperties,
+  parseSortParam,
 } from "@/lib/filters";
 
 export interface PropertyListItem {
@@ -60,9 +62,10 @@ function PropertiesListingInner({
     ? parseInt(searchParams.get("pagina")!, 10)
     : 1;
   const currentPage = Number.isFinite(parsedPage) ? Math.max(1, parsedPage) : 1;
+  const sort = parseSortParam(searchParams.get("orden"));
 
   const filtered = useMemo(() => {
-    return properties.filter((p) => {
+    const result = properties.filter((p) => {
       if (operationType && p.operationType !== operationType) return false;
       if (
         propertyTypeSlugs.length > 0 &&
@@ -88,6 +91,7 @@ function PropertiesListingInner({
       }
       return true;
     });
+    return sortProperties(result, sort);
   }, [
     properties,
     operationType,
@@ -97,6 +101,7 @@ function PropertiesListingInner({
     onlyAvailable,
     surfaceMin,
     surfaceMax,
+    sort,
   ]);
 
   const totalCount = filtered.length;
@@ -112,6 +117,7 @@ function PropertiesListingInner({
     disponibles: onlyAvailable ? "1" : undefined,
     supmin: searchParams.get("supmin") || undefined,
     supmax: searchParams.get("supmax") || undefined,
+    orden: searchParams.get("orden") || undefined,
   };
 
   return (

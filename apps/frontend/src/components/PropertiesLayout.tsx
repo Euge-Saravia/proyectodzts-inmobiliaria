@@ -2,6 +2,7 @@
 
 import { useState, useTransition, Suspense } from "react";
 import PropertiesFilters from "./PropertiesFilters";
+import PropertiesSort from "./PropertiesSort";
 import ActiveFilterBadges from "./ActiveFilterBadges";
 import type { FilterOptions } from "@/types/filters";
 import "./PropertiesLayout.css";
@@ -56,12 +57,13 @@ export default function PropertiesLayout({
             startTransition={startTransition}
           />
 
-            <div className="mb-3" aria-live="polite">
-              <p className="text-muted mb-0">
+            <div className="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-3">
+              <p className="text-muted mb-0" aria-live="polite">
                 {totalCount === 1
                   ? "1 propiedad encontrada"
                   : `${totalCount} propiedades encontradas`}
               </p>
+              <PropertiesSort />
             </div>
 
             {children}

@@ -345,6 +345,9 @@ function PropertiesFiltersInner({
     if (filters.supMin) params.set("supmin", filters.supMin);
     if (filters.supMax) params.set("supmax", filters.supMax);
 
+    const orden = searchParams.get("orden");
+    if (orden) params.set("orden", orden);
+
     const queryString = params.toString();
     startTransition(() => {
       router.push(queryString ? `/propiedades?${queryString}` : "/propiedades");
@@ -354,8 +357,9 @@ function PropertiesFiltersInner({
 
   const clearFilters = () => {
     dispatch({ type: "RESET" });
+    const orden = searchParams.get("orden");
     startTransition(() => {
-      router.push("/propiedades");
+      router.push(orden ? `/propiedades?orden=${orden}` : "/propiedades");
     });
     setIsOpenMobile(false);
   };

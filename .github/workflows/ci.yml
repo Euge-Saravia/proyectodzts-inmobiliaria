@@ -32,6 +32,9 @@ jobs:
       - name: Lint frontend
         run: pnpm --filter dzts-website lint
 
+      - name: Unit tests frontend
+        run: pnpm --filter dzts-website test
+
       # Typecheck instead of `next build`: the frontend build fetches content
       # from Sanity at build time, which can't run against ci-placeholder creds.
       # The full frontend build is validated in e2e.yml (real preview creds).
