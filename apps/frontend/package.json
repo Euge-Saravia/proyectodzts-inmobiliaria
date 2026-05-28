@@ -44,11 +44,5 @@
     "eslint-plugin-react": "^7.37.5",
     "serve": "^14.2.4",
     "typescript": "^5.9.3"
-  },
-  "pnpm": {
-    "overrides": {
-      "@types/react": "19.2.14",
-      "@types/react-dom": "19.2.3"
-    }
   }
 }
