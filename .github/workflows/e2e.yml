@@ -7,6 +7,9 @@ on:
       - "apps/frontend/**"
       - ".github/workflows/e2e.yml"
 
+permissions:
+  contents: read
+
 jobs:
   # Reads the @playwright/test version from the lockfile so the e2e job can run
   # in the matching Playwright container image. This keeps the browser binaries

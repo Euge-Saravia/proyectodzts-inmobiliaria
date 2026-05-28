@@ -14,6 +14,9 @@ on:
   # Manual fallback from the GitHub UI (Actions tab → Run workflow).
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 # Coalesce rapid-fire triggers into a single deploy. Cancel any in-flight
 # deploy and queue the newest one.
 concurrency:
