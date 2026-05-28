@@ -184,4 +184,7 @@ export const propertyType = defineType({
       group: "seo",
     }),
   ],
+  preview: {
+    select: { title: "title", subtitle: "subtitle", media: "images.0" },
+  },
 });

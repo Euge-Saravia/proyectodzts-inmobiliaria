@@ -62,6 +62,16 @@ export const homePageType = defineType({
         defineArrayMember({
           type: "reference",
           to: [{ type: "property" }],
+          options: {
+            filter: ({ document }) => {
+              const added = (
+                (document?.featuredProperties as { _ref?: string }[]) ?? []
+              )
+                .map((item) => item?._ref)
+                .filter(Boolean);
+              return { filter: "!(_id in $added)", params: { added } };
+            },
+          },
         }),
       ],
       validation: (rule) => rule.max(6).unique(),

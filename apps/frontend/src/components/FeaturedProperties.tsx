@@ -28,14 +28,12 @@ export default async function FeaturedProperties({
     data: FEATURED_QUERY_RESULT | null;
   };
 
-  // Preserve the manual order from the Studio; hide sold/rented/unpublished.
+  // Preserve the manual order and the author's selection from the Studio.
+  // Only hide unpublished properties (they have no detail page, so their card
+  // would link to a 404); sold/rented featured properties still show, with
+  // their status ribbon.
   const properties = (data ?? [])
-    .filter(
-      (property) =>
-        property.published !== false &&
-        property.status !== "vendido" &&
-        property.status !== "alquilado",
-    )
+    .filter((property) => property.published !== false)
     .slice(0, 6);
 
   return (
