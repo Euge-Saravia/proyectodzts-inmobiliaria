@@ -89,7 +89,6 @@ export type Property = {
   size?: number;
   price?: number;
   currency?: "USD" | "ARS";
-  featured?: boolean;
   seo?: Seo;
 };
 
@@ -229,6 +228,13 @@ export type PropiedadesPage = {
   seo?: Seo;
 };
 
+export type PropertyReference = {
+  _ref: string;
+  _type: "reference";
+  _weak?: boolean;
+  [internalGroqTypeReferenceTo]?: "property";
+};
+
 export type HomePage = {
   _id: string;
   _type: "homePage";
@@ -252,6 +258,11 @@ export type HomePage = {
     _type: "image";
   };
   featuredPropertiesHeading?: string;
+  featuredProperties?: Array<
+    {
+      _key: string;
+    } & PropertyReference
+  >;
   sections?: Array<{
     title?: string;
     anchorId?: string;
@@ -400,6 +411,7 @@ export type AllSanitySchemaTypes =
   | SanityImageHotspot
   | SiteSettings
   | PropiedadesPage
+  | PropertyReference
   | HomePage
   | SanityImagePaletteSwatch
   | SanityImagePalette
@@ -451,7 +463,7 @@ export type PROPERTIES_QUERY_RESULT = Array<{
 
 // Source: ../frontend/src/components/FeaturedProperties.tsx
 // Variable: FEATURED_QUERY
-// Query: *  [_type == "property" && featured == true && published != false]  | order(publishedAt desc)[0...6]  {    _id,    title,    "slug": slug.current,    subtitle,    price,    currency,    operationType,    status,    rooms,    "city": city->name,    "image": images[0] { asset->{ _id, url, metadata { lqip } } }  }
+// Query: *[_type == "homePage"][0].featuredProperties[]->{    _id,    title,    "slug": slug.current,    subtitle,    price,    currency,    operationType,    status,    published,    rooms,    "city": city->name,    "image": images[0] { asset->{ _id, url, metadata { lqip } } }  }
 export type FEATURED_QUERY_RESULT = Array<{
   _id: string;
   title: string | null;
@@ -461,6 +473,7 @@ export type FEATURED_QUERY_RESULT = Array<{
   currency: "ARS" | "USD" | null;
   operationType: "alquiler" | "venta" | null;
   status: "alquilado" | "disponible" | "reservado" | "vendido" | null;
+  published: boolean | null;
   rooms: number | null;
   city: string | null;
   image: {
@@ -472,7 +485,7 @@ export type FEATURED_QUERY_RESULT = Array<{
       } | null;
     } | null;
   } | null;
-}>;
+}> | null;
 
 // Source: ../frontend/src/components/ReferenceSearch.tsx
 // Variable: REFERENCE_SLUG_QUERY
@@ -788,7 +801,7 @@ declare module "@sanity/client" {
   interface SanityQueries {
     '\n  *[_type == "siteSettings"][0] {\n    address,\n    mapEmbedUrl\n  }\n': MAP_DATA_QUERY_RESULT;
     '\n  *[_type == "property"\n    && defined(slug.current)\n    && published != false\n  ] | order(publishedAt desc) {\n    _id,\n    title,\n    "slug": slug.current,\n    subtitle,\n    price,\n    currency,\n    operationType,\n    status,\n    "propertyType": propertyType->name,\n    "propertyTypeSlug": propertyType->slug.current,\n    "city": city->name,\n    "citySlug": city->slug.current,\n    rooms,\n    sizeTotal,\n    size,\n    reference,\n    "image": images[0] { asset->{ _id, url, metadata { lqip } } }\n  }\n': PROPERTIES_QUERY_RESULT;
-    '*\n  [_type == "property" && featured == true && published != false]\n  | order(publishedAt desc)[0...6]\n  {\n    _id,\n    title,\n    "slug": slug.current,\n    subtitle,\n    price,\n    currency,\n    operationType,\n    status,\n    rooms,\n    "city": city->name,\n    "image": images[0] { asset->{ _id, url, metadata { lqip } } }\n  }': FEATURED_QUERY_RESULT;
+    '\n  *[_type == "homePage"][0].featuredProperties[]->{\n    _id,\n    title,\n    "slug": slug.current,\n    subtitle,\n    price,\n    currency,\n    operationType,\n    status,\n    published,\n    rooms,\n    "city": city->name,\n    "image": images[0] { asset->{ _id, url, metadata { lqip } } }\n  }': FEATURED_QUERY_RESULT;
     '*[_type == "property" && reference == $reference][0]{ "slug": slug.current }': REFERENCE_SLUG_QUERY_RESULT;
     '\n  *[_type == "homePage"][0].sections[]{\n    _key,\n    title,\n    anchorId,\n    content,\n    imagePosition,\n    backgroundColor,\n    images[]{ asset->{ _id, url, metadata { lqip } }, alt }\n  }\n': HOME_SECTIONS_QUERY_RESULT;
     '\n  *[_type == "homePage"][0] {\n    heroHeading,\n    heroImage { asset->{ _id, url, metadata { lqip, dimensions } } },\n    heroLogo { asset->{ _id, url, metadata { lqip, dimensions } }, alt },\n    featuredPropertiesHeading\n  }\n': HOME_CONTENT_QUERY_RESULT;
