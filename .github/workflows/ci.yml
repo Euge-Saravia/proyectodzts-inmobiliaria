@@ -30,10 +30,13 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Lint frontend
-        run: pnpm --filter frontend lint
+        run: pnpm --filter dzts-website lint
 
-      - name: Build frontend
-        run: pnpm --filter frontend build
+      # Typecheck instead of `next build`: the frontend build fetches content
+      # from Sanity at build time, which can't run against ci-placeholder creds.
+      # The full frontend build is validated in e2e.yml (real preview creds).
+      - name: Typecheck frontend
+        run: pnpm --filter dzts-website exec tsc --noEmit
 
       - name: Build studio
         run: pnpm --filter dzts-studio exec sanity build
