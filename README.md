@@ -348,11 +348,12 @@ pnpm test:e2e:ui
 
 A GitHub Actions workflow (`.github/workflows/ci.yml`) runs on every pull request targeting `dev` or `main`. It performs:
 
-1. **Lint** the frontend (`pnpm --filter frontend lint`)
-2. **Build** the frontend (`pnpm --filter frontend build`)
-3. **Build** the studio (`pnpm --filter dzts-studio exec sanity build`)
+1. **Lint** the frontend (`pnpm --filter dzts-website lint`)
+2. **Unit tests** for the frontend (`pnpm --filter dzts-website test`)
+3. **Typecheck** the frontend (`pnpm --filter dzts-website exec tsc --noEmit`)
+4. **Build** the studio (`pnpm --filter dzts-studio exec sanity build`)
 
-The workflow uses placeholder environment variables so builds can compile without real Sanity/Web3Forms credentials. The studio build uses `exec sanity build` to skip the `prebuild` hook (schema extraction + typegen), which requires a live Sanity API connection.
+The frontend is typechecked rather than built here: the static export fetches Sanity content at build time, which can't run on placeholder credentials, so the full `next build` is validated in the E2E workflow instead (against the `Preview` environment's real non-prod credentials). The studio build uses placeholder env vars and `exec sanity build` to skip the `prebuild` hook (schema extraction + typegen), which requires a live Sanity API connection.
 
 ### E2E Tests
 
