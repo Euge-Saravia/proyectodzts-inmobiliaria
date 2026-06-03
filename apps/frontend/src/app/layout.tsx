@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { Analytics } from "@vercel/analytics/next";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import BootstrapClient from "@/components/BootstrapClient";
 import "bootstrap-icons/font/bootstrap-icons.css";
@@ -41,7 +40,6 @@ export default function RootLayout({
         </a>
         {children}
         <BootstrapClient />
-        <Analytics />
         {gaId && <GoogleAnalytics gaId={gaId} />}
       </body>
     </html>
