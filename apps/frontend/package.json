@@ -25,7 +25,7 @@
     "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.1",
     "next": "16.2.7",
-    "next-sanity": "^13.0.8",
+    "next-sanity": "^13.0.11",
     "react": "19.2.7",
     "react-dom": "19.2.7",
     "react-zoom-pan-pinch": "^3.7.0"
