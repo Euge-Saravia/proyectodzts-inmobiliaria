@@ -14,12 +14,14 @@
     "pnpm": ">=10.0.0"
   },
   "devDependencies": {
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
     "react-doctor": "^0.4.2"
   },
   "pnpm": {
     "overrides": {
-      "@types/react": "19.2.17",
-      "@types/react-dom": "19.2.3"
+      "@types/react": "$@types/react",
+      "@types/react-dom": "$@types/react-dom"
     }
   }
 }
