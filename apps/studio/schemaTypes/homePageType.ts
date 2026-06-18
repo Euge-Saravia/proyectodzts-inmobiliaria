@@ -52,6 +52,31 @@ export const homePageType = defineType({
       validation: (rule) => rule.required(),
     }),
     defineField({
+      name: "featuredProperties",
+      title: "Propiedades Destacadas",
+      type: "array",
+      group: "content",
+      description:
+        "Seleccioná y ordená (arrastrando) las propiedades que se muestran en la home. Máximo 6. Las vendidas/alquiladas se ocultan automáticamente.",
+      of: [
+        defineArrayMember({
+          type: "reference",
+          to: [{ type: "property" }],
+          options: {
+            filter: ({ document }) => {
+              const added = (
+                (document?.featuredProperties as { _ref?: string }[]) ?? []
+              )
+                .map((item) => item?._ref)
+                .filter(Boolean);
+              return { filter: "!(_id in $added)", params: { added } };
+            },
+          },
+        }),
+      ],
+      validation: (rule) => rule.max(6).unique(),
+    }),
+    defineField({
       name: "sections",
       group: "content",
       title: "Secciones",

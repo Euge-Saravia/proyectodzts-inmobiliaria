@@ -10,12 +10,20 @@ interface PropertyCardProps {
   price?: number | null;
   currency?: string | null;
   operationType?: string | null;
+  status?: string | null;
   image?: SanityImageSource | null;
   lqip?: string | null;
   rooms?: number | null;
   city?: string | null;
+  reference?: string | null;
   priority?: boolean;
 }
+
+const STATUS_LABELS: Record<string, { label: string; badgeClass: string }> = {
+  reservado: { label: "Reservado", badgeClass: "bg-warning text-dark" },
+  vendido: { label: "Vendido", badgeClass: "bg-danger text-white" },
+  alquilado: { label: "Alquilado", badgeClass: "bg-danger text-white" },
+};
 
 export default function PropertyCard({
   title,
@@ -24,15 +32,18 @@ export default function PropertyCard({
   price,
   currency = "USD",
   operationType,
+  status,
   image,
   lqip,
   rooms,
   city,
+  reference,
   priority,
 }: PropertyCardProps) {
+  const statusInfo = status ? STATUS_LABELS[status] : undefined;
   const imageUrl = image
-    ? urlFor(image).height(220).width(400).quality(80).auto("format").url()
-    : "https://placehold.co/400x220/png";
+    ? urlFor(image).width(800).height(600).quality(80).auto("format").url()
+    : "https://placehold.co/400x300/png";
 
   const currencySymbol = currency === "ARS" ? "AR$" : "US$";
 
@@ -42,7 +53,7 @@ export default function PropertyCard({
         className="card shadow-sm rounded-4 border-0 h-100 mx-auto"
         style={{ maxWidth: 400 }}
       >
-        <div className="position-relative" style={{ aspectRatio: "400/220" }}>
+        <div className="position-relative" style={{ aspectRatio: "4/3" }}>
           <Image
             src={imageUrl}
             alt={title || "Property Image"}
@@ -59,9 +70,21 @@ export default function PropertyCard({
               {operationType === "venta" ? "Venta" : "Alquiler"}
             </span>
           )}
+          {statusInfo && (
+            <span
+              className={`position-absolute top-0 start-0 m-2 badge rounded-pill ${statusInfo.badgeClass}`}
+            >
+              {statusInfo.label}
+            </span>
+          )}
         </div>
         <div className="w-100 bg-primary" style={{ height: 4 }}></div>
         <div className="card-body text-center pb-2 bg-light rounded-bottom-4">
+          {reference && (
+            <div className="text-muted small mb-1" style={{ fontSize: "0.75rem" }}>
+              Ref: {reference}
+            </div>
+          )}
           <h5 className="fw-bold text-primary mb-2 fs-5">{title}</h5>
           {(city || rooms) && (
             <p className="mb-2 text-muted small">
@@ -71,10 +94,7 @@ export default function PropertyCard({
             </p>
           )}
           {subtitle && <p className="mb-3 text-body small">{subtitle}</p>}
-          <div className="d-flex align-items-center justify-content-between border-top pt-3">
-            <span className="text-primary fs-5">
-              <i className="bi bi-share" aria-hidden="true"></i>
-            </span>
+          <div className="d-flex align-items-center justify-content-end border-top pt-3">
             <span className="fw-bold text-primary fs-5">
               {price != null
                 ? `${currencySymbol}${price.toLocaleString("es-AR")}`

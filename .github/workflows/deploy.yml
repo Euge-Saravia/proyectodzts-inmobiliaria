@@ -1,0 +1,86 @@
+name: Deploy Frontend
+
+on:
+  # Content editors never touch GitHub — this fires from a Sanity webhook.
+  repository_dispatch:
+    types: [sanity-publish]
+
+  # Auto-deploy whenever main is updated (e.g. after a PR merge).
+  push:
+    branches: [main]
+    paths:
+      - "apps/frontend/**"
+      - ".github/workflows/deploy.yml"
+
+  # Manual fallback from the GitHub UI (Actions tab → Run workflow).
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Coalesce rapid-fire triggers (e.g. several Sanity publishes in a row) into a
+# single deploy. Cancel any in-flight deploy and queue the newest one.
+concurrency:
+  group: deploy-frontend
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 15
+
+    env:
+      NEXT_PUBLIC_SANITY_PROJECT_ID: ${{ vars.NEXT_PUBLIC_SANITY_PROJECT_ID }}
+      NEXT_PUBLIC_SANITY_DATASET: ${{ vars.NEXT_PUBLIC_SANITY_DATASET }}
+      NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+      NEXT_PUBLIC_GA_MEASUREMENT_ID: ${{ vars.NEXT_PUBLIC_GA_MEASUREMENT_ID }}
+      # Baked into robots.txt at build time: "production" allows indexing,
+      # anything else emits Disallow: /. Vercel sets VERCEL_ENV automatically
+      # on its own deploys (robots.ts falls back to it), so preview deploys
+      # there stay blocked from search engines without any extra config.
+      SITE_ENV: production
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build static export
+        run: pnpm --filter dzts-website build
+
+      - name: Upload to shared hosting via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          # Ferozo requires FTPS explicit (TLS on the control channel, port 21).
+          # Plain FTP fails with "550 SSL/TLS required on the control channel".
+          protocol: ftps
+          local-dir: ./apps/frontend/out/
+          server-dir: ${{ secrets.FTP_SERVER_DIR }}
+          # Keep files the webserver needs but that aren't in `out/` (e.g. a
+          # separately uploaded backend, cPanel artifacts).
+          dangerous-clean-slate: false
+          # Exclude transient artifacts. `.htaccess` IS included on purpose.
+          exclude: |
+            **/.git*
+            **/.DS_Store
+            **/node_modules/**
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "Trigger: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
+            echo "Payload: ${{ toJson(github.event.client_payload) }}" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "Site URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}" >> $GITHUB_STEP_SUMMARY

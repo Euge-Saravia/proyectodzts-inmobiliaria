@@ -8,27 +8,27 @@
     "build": "sanity build",
     "deploy": "sanity deploy",
     "deploy-graphql": "sanity graphql deploy",
-    "predev": "pnpm run typegen --enforce-required-fields",
-    "prebuild": "pnpm run typegen --enforce-required-fields",
-    "typegen": "sanity schema extract && sanity typegen generate --enforce-required-fields"
+    "predev": "pnpm run typegen",
+    "prebuild": "pnpm run typegen",
+    "typegen": "sanity schema extract && sanity typegen generate"
   },
   "keywords": [
     "sanity"
   ],
   "dependencies": {
     "@sanity/icons": "^3.7.4",
-    "@sanity/vision": "^5.7.0",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
-    "sanity": "^5.7.0",
+    "@sanity/vision": "^6.1.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "sanity": "^6.1.0",
     "styled-components": "^6.3.8"
   },
   "devDependencies": {
     "@sanity/eslint-config-studio": "^6.0.0",
-    "@types/react": "^19.2.10",
-    "eslint": "^9.39.2",
+    "@types/react": "^19.2.17",
+    "eslint": "^9",
     "prettier": "^3.8.1",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.3"
   },
   "prettier": {
     "semi": false,

@@ -136,6 +136,23 @@ export const siteSettingsType = defineType({
       group: "contact",
     }),
     defineField({
+      name: "mapEmbedUrl",
+      title: "URL de mapa embebido (Google Maps)",
+      type: "url",
+      group: "contact",
+      description:
+        "Opcional. URL del iframe de Google Maps para mostrar el pin del negocio con su tarjeta de información. " +
+        "Para obtenerla: abrir Google Maps, buscar el negocio, hacer clic en 'Compartir' → pestaña 'Insertar un mapa', " +
+        "y copiar la URL que aparece dentro de src=\"...\" (debe empezar con https://www.google.com/maps/embed?pb=...). " +
+        "Si se deja vacío, el mapa usa la dirección y muestra solo el pin de ubicación.",
+      validation: (rule) =>
+        rule.uri({ scheme: ["https"] }).custom((value) => {
+          if (!value) return true;
+          if (value.startsWith("https://www.google.com/maps/embed?")) return true;
+          return "La URL debe empezar con https://www.google.com/maps/embed? — copiala desde el atributo src=\"...\" del iframe que provee Google Maps en 'Compartir → Insertar un mapa'.";
+        }),
+    }),
+    defineField({
       name: "whatsappNumber",
       title: "WhatsApp",
       type: "string",

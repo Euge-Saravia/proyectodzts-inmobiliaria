@@ -8,3 +8,9 @@ export interface FilterOptions {
   propertyTypes: FilterOption[];
   roomCounts: number[];
 }
+
+export type SortOption =
+  | "precio-asc"
+  | "precio-desc"
+  | "tamano-asc"
+  | "tamano-desc";

@@ -32,12 +32,16 @@ Frontend-specific (from `apps/frontend/`):
 
 ```bash
 pnpm dev          # Start Next.js dev server with Turbopack
-pnpm build        # Production build
-pnpm start        # Run production server
+pnpm build        # Static export (writes to ./out)
+pnpm start        # Serve the static export locally with `serve`
 pnpm lint         # Run ESLint
 pnpm test:e2e     # Run Playwright e2e tests (requires build first)
 pnpm test:e2e:ui  # Run e2e tests with Playwright UI
 ```
+
+The frontend is a **fully static site** (`output: "export"` in `next.config.ts`).
+`pnpm build` produces `apps/frontend/out/` which is uploaded to shared hosting.
+There is no Node server in production — see "Static Export" below.
 
 Studio-specific (from `apps/studio/`):
 
@@ -47,6 +51,8 @@ pnpm build    # Build for deployment
 pnpm deploy   # Deploy to Sanity hosting
 pnpm typegen  # Generate TypeScript types from schema
 ```
+
+Schema changes are a manual three-step flow (`typegen` → `deploy` → commit `types.ts`). See README "Schema changes (manual studio deploy)" for the order and the failure mode for each skipped step. Don't deploy the Studio without committing the regenerated `apps/frontend/src/sanity/types.ts` — the frontend's FTP build runs from a clean checkout against committed types only.
 
 ## Model Delegation
 
@@ -66,7 +72,6 @@ The main Opus agent delegates coding tasks to lighter models via custom agents i
 - Fixing lint or TypeScript errors
 - Writing CSS/styling changes
 - Adding a new route/page with straightforward requirements
-- Updating caching (`cacheLife`/`cacheTag`) on existing functions
 - Writing or updating e2e tests in `apps/frontend/e2e/`
 
 ### Delegate to `quick-fix` (Haiku) when:
@@ -113,17 +118,17 @@ Each app has its own `.env.local` file with different prefixes (Next.js uses `NE
 | -------------------------------- | --------------------------------- |
 | `NEXT_PUBLIC_SANITY_PROJECT_ID`  | Sanity project identifier         |
 | `NEXT_PUBLIC_SANITY_DATASET`     | Sanity dataset name               |
-| `NEXT_PUBLIC_WEB3FORMS_KEY`      | Web3Forms API key for contact form|
 | `NEXT_PUBLIC_SITE_URL`           | Production site URL (for sitemap.xml and robots.txt) |
 | `NEXT_PUBLIC_GA_MEASUREMENT_ID`  | Google Analytics 4 measurement ID (optional, e.g. `G-XXXXXXXXXX`) |
-| `SANITY_REVALIDATE_SECRET`       | HMAC secret for Sanity webhook (server-only, no `NEXT_PUBLIC_` prefix) |
 
 ### Studio (`apps/studio/.env.local`)
 
-| Variable                   | Description               |
-| -------------------------- | ------------------------- |
-| `SANITY_STUDIO_PROJECT_ID` | Sanity project identifier |
-| `SANITY_STUDIO_DATASET`    | Sanity dataset name       |
+| Variable                   | Description                                                                              |
+| -------------------------- | ---------------------------------------------------------------------------------------- |
+| `SANITY_STUDIO_PROJECT_ID` | Sanity project identifier                                                                |
+| `SANITY_STUDIO_DATASET`    | Sanity dataset name                                                                      |
+| `SANITY_STUDIO_HOSTNAME`   | Subdomain on `*.sanity.studio` (required for unattended `sanity deploy` in CI)           |
+| `SANITY_STUDIO_APP_ID`     | App ID from sanity.io/manage → Studios; pins the version channel selector to this app   |
 
 See `.env.example` files in each app for templates.
 
@@ -131,9 +136,11 @@ See `.env.example` files in each app for templates.
 
 ### Frontend
 
-Next.js App Router project:
+Next.js App Router project with route groups:
 
-- `apps/frontend/src/app/` - Routes and layouts (file-based routing)
+- `apps/frontend/src/app/` - Root layout (html/body/fonts/bootstrap)
+- `apps/frontend/src/app/(site)/` - Site layout (header/footer/WhatsApp button) for public pages
+- `apps/frontend/src/app/(print)/` - Minimal layout (no chrome) for print-optimized pages
 - `apps/frontend/src/components/` - React components
 - `apps/frontend/src/lib/` - Shared utility functions (e.g., `filters.ts`)
 - `apps/frontend/src/types/` - Shared TypeScript type definitions (e.g., `filters.ts`)
@@ -157,34 +164,65 @@ Sanity Studio project:
 - Feature branches follow the naming convention: `feat/feature-name`
 - Push changes and create PRs using `gh pr create` command
 
+### Releasing dev → main
+
+**Merge method matters: feature PRs into `dev` are squashed; the release PR `dev → main` is merged with a merge commit (not squashed).** The repo allows both methods — pick the right one per PR.
+
+`dev` is a long-lived branch. Squashing it into `main` creates a brand-new commit that shares no history with `dev`, so `main` and `dev` stay permanently diverged and every subsequent release surfaces phantom conflicts. A **merge commit** keeps `main` a true descendant of `dev`, so releases merge cleanly with no conflict-resolution dance.
+
+To release: open the PR from `dev` → `main` and merge it with **"Create a merge commit"**.
+
+`git log --first-parent main` then gives a clean release-level history; per-feature commits stay reachable through the merge.
+
+> Older releases were squashed, which is why `dev`'s history has `merge: resolve main into dev for release PR` commits (a `--ours` workaround for the divergence those squashes caused). That workaround is no longer needed.
+
 ## CI
 
 Two GitHub Actions workflows run on PRs to `dev` and `main`:
 
 ### Lint & Build (`.github/workflows/ci.yml`)
 
-1. **Lint frontend**: `pnpm --filter frontend lint`
-2. **Build frontend**: `pnpm --filter frontend build`
-3. **Build studio**: `pnpm --filter dzts-studio exec sanity build`
+1. **Lint frontend**: `pnpm --filter dzts-website lint`
+2. **Unit tests frontend**: `pnpm --filter dzts-website test` (vitest)
+3. **Typecheck frontend**: `pnpm --filter dzts-website exec tsc --noEmit`
+4. **Build studio**: `pnpm --filter dzts-studio exec sanity build`
 
-- Uses `ubuntu-latest`, Node 20, pnpm 10.
-- Placeholder env vars (`ci-placeholder`) satisfy build-time validation without real credentials.
+- Uses `ubuntu-latest`, Node 24, pnpm 10. The filter is `dzts-website` (the `name` in `package.json`), not `frontend` — a wrong filter silently no-ops the step.
+- The frontend is **typechecked, not built**, here: the static export fetches Sanity content at build time, which can't run on `ci-placeholder` creds (`Dataset not found`). The full `next build` is validated in `e2e.yml` against the `preview` environment's real (non-prod) creds.
+- Placeholder env vars (`ci-placeholder`) satisfy the studio build without real credentials.
 - Studio build uses `exec sanity build` instead of `pnpm build` to skip the `prebuild` hook (schema extraction + typegen require a live Sanity API connection).
 - `--frozen-lockfile` ensures lockfile stays in sync with `package.json`.
 
 ### E2E Tests (`.github/workflows/e2e.yml`)
 
 - Runs Playwright e2e tests against a production build of the frontend.
+- Runs inside the official Playwright container (`mcr.microsoft.com/playwright:<version>-noble`) so browsers + OS deps are preinstalled — there is no `playwright install` step (it used to hang and burn the 15-min job timeout). A small `resolve-playwright` job reads the `@playwright/test` version from `pnpm-lock.yaml` and feeds it as the image tag, keeping the container in sync with the package automatically (Dependabot can't update `container:` image refs — dependabot-core#5819).
 - Only triggers when `apps/frontend/` or the workflow file changes (path filter).
-- Uses real Sanity credentials from GitHub Secrets (`NEXT_PUBLIC_SANITY_PROJECT_ID`, `NEXT_PUBLIC_SANITY_DATASET`) — required for the app to render content.
+- Binds to the GitHub `Preview` environment; reads `NEXT_PUBLIC_SANITY_PROJECT_ID` / `NEXT_PUBLIC_SANITY_DATASET` from that environment's Secrets (non-prod Sanity project). `deploy.yml` binds to `Production` for the real Sanity project + FTP credentials. `ci.yml` is unscoped and uses placeholder values.
 - Uploads `playwright-report/` and `test-results/` as artifacts on failure.
 - The pnpm filter name for the frontend is `dzts-website` (the `name` field in `package.json`), not `frontend`.
+
+### Deploy Studio (`.github/workflows/deploy-studio.yml`)
+
+- Auto-deploys the Sanity Studio to `*.sanity.studio` on pushes to `main` that touch `apps/studio/**` or `apps/frontend/src/sanity/types.ts`.
+- Binds to the `production` environment; reads `SANITY_STUDIO_HOSTNAME` and `SANITY_STUDIO_APP_ID` as env vars, and `SANITY_DEPLOY_TOKEN` as a secret (generated in sanity.io/manage → API → Tokens with Deploy Studio permission).
+- Runs `pnpm --filter dzts-studio exec sanity deploy` — same rationale as `ci.yml` for using `exec` (bypasses the `prebuild` typegen hook; `sanity deploy` handles schema extraction and build itself).
+- Studio hostname and app ID are read from env vars in `sanity.cli.ts`, so local interactive `sanity deploy` no longer prompts either.
 
 ### Dependabot (`.github/dependabot.yml`)
 
 - Opens weekly PRs (Mondays) for outdated npm dependencies and GitHub Actions versions.
 - npm updates are grouped by ecosystem (`next-ecosystem`, `react`, `sanity`, `eslint`, `bootstrap`) to reduce PR noise. Ungrouped packages get individual PRs.
-- Dependabot PRs target the default branch and trigger the CI workflow, so lint + build are validated before merge.
+- `target-branch: "dev"` is set on both ecosystems so PRs open against `dev` (the `deps → dev → release` flow), not `main`. Dependabot reads this file from the **default branch (`main`)**, so the `target-branch` change only takes effect once it lands on `main` — keep `dev` mirrored so a release merge doesn't revert it.
+- Dependabot is disabled by default on forks; it was enabled manually (Settings → Code security) for this repo. The `dependabot.yml` is inert until that toggle is on.
+- Dependabot PRs trigger the CI + e2e workflows, so lint + build + e2e are validated before merge.
+
+### Code Scanning (CodeQL)
+
+- Enabled via **Default setup** (no `codeql.yml` workflow). Languages: `javascript-typescript` + `actions`; `default` query suite; weekly schedule + on PRs.
+- JS/TS is analyzed "no-build" — CodeQL needs no `pnpm install`, build step, or Sanity env vars, so there's no placeholder-env friction. Don't switch to Advanced setup unless custom queries or build steps are actually needed.
+- Code scanning is free on this public repo. On Dependabot PRs the `GITHUB_TOKEN` is read-only, so alerts may not upload there — internal branches (`feat/*`, `dev`) analyze normally.
+- Results land in the fork's **Security** tab. Keep it informational (not a required check) to avoid blocking PRs on low-severity noise.
 
 ## Page Structure & Routes
 
@@ -193,7 +231,8 @@ Two GitHub Actions workflows run on PRs to `dev` and `main`:
 - `/` - Home page with search, featured properties, and location map
 - `/propiedades` - Properties listing page with filters, pagination, and active filter badges
 - `/propiedades/[slug]` - Property detail page with images, description, JSON-LD structured data, and location map
-- Custom `not-found.tsx` (branded 404 page) and `error.tsx` (error boundary with retry) at app root
+- `/propiedades/[slug]/ficha` - Print-optimized property sheet (no header/footer, `(print)` route group)
+- Custom `not-found.tsx` (branded 404 page) and `error.tsx` (error boundary with retry) at app root and `(site)` route group
 
 ### Content Integration
 
@@ -223,8 +262,8 @@ Two GitHub Actions workflows run on PRs to `dev` and `main`:
 ## Components
 
 - **MapSection** - Reusable component for displaying embedded Google Maps. Renders full-width iframe (450px height) when address is provided, returns null if no address exists.
-- **ContactButton** - Client component that wraps a button + dynamically imported `ContactModal`. Used on the property detail page (server component) to open the contact form without making the entire page a client component.
-- **ContactModal** - Client component with Web3Forms integration for the contact form. Dynamically imported (`next/dynamic`, `ssr: false`) wherever used.
+- **ShareButton** - Client component with Web Share API (mobile) / clipboard copy with "Link copiado" feedback (desktop). Used on the property detail page.
+- **FichaActions** - Client component with "Imprimir Ficha" (`window.print()`) and "Compartir" (same share logic as ShareButton) buttons. Used on the print-optimized ficha page.
 
 ## Conventions
 
@@ -240,32 +279,17 @@ Two GitHub Actions workflows run on PRs to `dev` and `main`:
 - Format prices with `toLocaleString("es-AR")` and display currency as `AR$`/`US$` (not `ARS`/`USD`).
 - Shared types go in `src/types/`, shared utilities in `src/lib/`. Do not duplicate type definitions or utility functions across components — import from the shared location.
 
-## Caching Strategy
+## Static Export
 
-The frontend uses Next.js 16 cache components (`"use cache"` directive + `cacheLife()` + `cacheTag()`):
+The frontend is deployed as a static site to shared hosting:
 
-- **`cacheLife("hours")`** - For rarely-changing data: site settings, SEO, page headings, map address.
-- **`cacheLife("minutes")`** - For content that updates more often: featured properties, individual property detail pages, home sections, filter option lists.
-- Cached functions are standalone `async function` with `"use cache"` as the first line, calling `sanityFetch` inside.
-- Every cached function includes a `cacheTag()` call matching the Sanity document `_type` it queries, enabling on-demand revalidation via webhook.
-
-### Cache Tags
-
-| Tag | Sanity `_type` | Cached functions |
-|-----|----------------|-----------------|
-| `"siteSettings"` | `siteSettings` | `getSiteSettings()`, `getCachedMapAddress()`, `getCachedSiteSeo()` |
-| `"property"` | `property` | `getCachedProperty()`, `FeaturedProperties`, `getCachedRoomCounts()` |
-| `"homePage"` | `homePage` | `getCachedHomeSections()`, `getCachedHomeContent()`, `getCachedHomeSeo()` |
-| `"propiedadesPage"` | `propiedadesPage` | `getCachedPropiedadesHeading()`, `getCachedPropiedadesSeo()` |
-| `"city"` | `city` | `getCachedCities()` |
-| `"propertyTypeCategory"` | `propertyTypeCategory` | `getCachedPropertyTypes()` |
-
-### On-Demand Revalidation
-
-- A webhook route at `POST /api/revalidate` (`src/app/api/revalidate/route.ts`) receives Sanity webhook payloads, validates the HMAC signature via `parseBody` from `next-sanity/webhook`, and calls `revalidateTag(body._type, "max")`.
-- The `"max"` second argument is required by Next.js 16 to invalidate cache entries across all cache life profiles.
-- The webhook must be configured in the Sanity dashboard (see README for setup instructions).
-- Without the webhook (e.g. local development), `cacheLife` TTLs still apply as a fallback.
+- `next.config.ts` sets `output: "export"` and `trailingSlash: true`.
+- `pnpm build` emits `apps/frontend/out/`; upload that directory to the host.
+- There is **no Node server** in production — no API routes, no middleware, no runtime caching, no server actions.
+- `images.unoptimized: true` disables the Next.js image optimizer (no server to run it). `next/image` still works and emits plain `<img>` tags.
+- Security headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`) and the trailing-slash redirect live in `apps/frontend/public/.htaccess`, which Next copies into `out/`. Replace with the equivalent nginx config if the host is nginx.
+- `/propiedades` fetches **all** active properties at build time. Filtering and pagination happen client-side in `PropertiesListing.tsx` via `useSearchParams`.
+- Content updates require a **rebuild + redeploy**. This is automated via `.github/workflows/deploy.yml`: a Sanity webhook fires a `repository_dispatch: sanity-publish` event, the workflow runs `pnpm build`, and `apps/frontend/out/` is uploaded over FTP. See README "Automated Deploys" for the setup. There is no `/api/revalidate` route.
 
 ## SEO
 
@@ -273,7 +297,7 @@ The frontend uses Next.js 16 cache components (`"use cache"` directive + `cacheL
 - Property detail pages include `<script type="application/ld+json">` with Schema.org `RealEstateListing` data (name, price, address, images).
 - Property detail pages generate OpenGraph metadata via `generateMetadata()`.
 - Ensure only one `<h1>` per page. Section headings within page content should use `<h2>` or lower.
-- **robots.txt** (`src/app/robots.ts`): Environment-aware. Blocks all bots in non-production (`VERCEL_ENV !== "production"`), allows indexing in production.
+- **robots.txt** (`src/app/robots.ts`): Environment-aware. Reads `SITE_ENV`, falling back to `VERCEL_ENV`. Only `"production"` allows indexing; everything else emits `Disallow: /`. `SITE_ENV=production` is set by `.github/workflows/deploy.yml` for FTP builds; `VERCEL_ENV` is auto-injected by Vercel, which keeps preview deploys blocked from search engines automatically.
 - **sitemap.xml** (`src/app/sitemap.ts`): Dynamically generated. Includes home, `/propiedades`, and all property detail pages fetched from Sanity.
 - **llms.txt** (`src/app/llms.txt/route.ts`): Markdown file for AI agents/LLMs ([spec](https://llmstxt.org/)). Lists main pages and all properties to help LLMs understand site content.
 
@@ -284,7 +308,7 @@ Playwright e2e smoke tests live in `apps/frontend/e2e/`. Config is at `apps/fron
 ### Test Design Principles
 
 - Tests assert **page structure** (element existence, selectors, navigation URLs) rather than CMS content text, making them resilient to Sanity content changes.
-- Static UI labels hardcoded in source code (e.g., "Buscar", "Aplicar filtros", "404", "contactate con") are safe to assert.
+- Static UI labels hardcoded in source code (e.g., "Buscar", "Aplicar filtros", "404", "Ficha", "Compartir") are safe to assert.
 - Tests navigate from the listing page to discover property detail slugs dynamically — no hardcoded slugs.
 - **When a test fails, fix the feature/bug first** — don't make the test more permissive just to pass. Investigate the root cause before adjusting test expectations.
 
@@ -309,8 +333,8 @@ When modifying components, be aware these selectors are used by e2e tests:
 | `a[href^="/propiedades/"]` | `PropertyCard` (card links) | `propiedades.spec.ts`, `property-detail.spec.ts` |
 | `.badge .btn-close` | `ActiveFilterBadges` | `propiedades.spec.ts` |
 | `#propertyCarousel` | `ImageCarousel` | `property-detail.spec.ts` |
-| `button:has-text('contactate con')` | `ContactButton` | `property-detail.spec.ts` |
-| `.modal.show`, `#contactName`, `#contactEmail`, `#contactPhone`, `#contactComments` | `ContactModal` | `property-detail.spec.ts` |
+| `a:has-text('Ficha')` | Property detail (ficha link) | `property-detail.spec.ts` |
+| `button:has-text('Compartir')` | `ShareButton` | `property-detail.spec.ts` |
 | `nav[aria-label="Breadcrumb"]` | `Breadcrumb` | `navigation.spec.ts`, `propiedades.spec.ts`, `property-detail.spec.ts` |
 | `.navbar-brand` | `Header` | `navigation.spec.ts` |
 | `footer.site-footer` | `Footer` | `navigation.spec.ts` |
@@ -324,20 +348,26 @@ When modifying components, be aware these selectors are used by e2e tests:
 
 ## Recent Implementation Notes
 
-- Listing skeleton: `apps/frontend/src/app/propiedades/loading.tsx` mirrors `PropertiesLayout` (filters sidebar + badges/count + grid).
-- Property detail skeleton: `apps/frontend/src/app/propiedades/[slug]/loading.tsx` includes carousel-sized media + 450px map placeholder.
+- Listing skeleton: `apps/frontend/src/app/(site)/propiedades/loading.tsx` mirrors `PropertiesLayout` (filters sidebar + badges/count + grid).
+- Property detail skeleton: `apps/frontend/src/app/(site)/propiedades/[slug]/loading.tsx` includes carousel-sized media + 450px map placeholder.
 - Sanity property images can have `url`/`metadata` as `null`; normalize before passing to `ImageCarousel` and only cast to `SanityImageSource` when `url` is present.
 - `ImageCarousel` accepts `asset?: SanityImageSource | null` and `lqip?: string | null`. Uses `.quality(80)` for consistent compression.
 - Property detail `description` is Portable Text; use `PortableTextBlock[] | null` and import `@portabletext/types` (dependency added to frontend).
 - `FilterOption` and `FilterOptions` types live in `src/types/filters.ts`. The `parseMultiple()` and `buildFilterOptions()` helpers live in `src/lib/filters.ts`. Both pages and multiple components import from these shared modules.
-- `ContactButton` is the pattern for triggering the contact modal from server components — a thin client component that manages modal state and dynamically imports `ContactModal`.
+- `ShareButton` uses Web Share API on mobile (native share sheet) and clipboard copy with "Link copiado" feedback badge on desktop.
+- Property detail and ficha share query/types via `src/sanity/queries/propertyDetail.ts`.
 - Only one image per page should have `priority` (the LCP candidate). Do not mark logos or secondary images as priority.
 - The `html` element uses `lang="es"` (Spanish site targeting Argentine audience).
 - Home page sections come from the `homePage` singleton (`apps/frontend/src/sanity/queries/homePage.ts`) and render via `TextImageSection` with Portable Text and images.
 - `homePage.sections[]` includes optional `anchorId` for header anchors (e.g., `/#servicios`, `/#nosotros`).
 - Header smooth-scrolls to anchors when already on `/` and updates the hash without full navigation.
-- `TextImageSection` supports a carousel (multiple images) and uses `asset.url` directly when present (fallback to `urlFor`).
+- `TextImageSection` supports a carousel (multiple images) via `SectionCarousel` component. Always uses `urlFor()` for images (requires `_id` in GROQ query).
 - Anchored sections use `scroll-margin-top: 60px` to offset the sticky header.
-- Webhook revalidation route: `src/app/api/revalidate/route.ts`. Uses `parseBody` from `next-sanity/webhook` for HMAC validation and `revalidateTag(type, "max")` from `next/cache`.
-- In Next.js 16, `revalidateTag()` requires two arguments: `(tag, profile)`. Pass `"max"` as the profile to revalidate all cache entries for a tag regardless of their original `cacheLife`.
-- The `/propiedades` listing page calls `sanityFetch` directly without `"use cache"` (dynamic `searchParams`), so it has no cache tag and is unaffected by revalidation.
+- The `/propiedades` listing page fetches all active properties at build time and passes them to `PropertiesListing.tsx`, a client component that reads `useSearchParams` to handle filtering and pagination without navigation round-trips.
+- Route groups: `(site)` wraps pages with header/footer/WhatsApp button via its own layout; `(print)` provides a minimal layout for the ficha page. Root layout only has html/body/fonts/bootstrap.
+- The ficha page (`/propiedades/[slug]/ficha`) uses raw `<img>` tags (not `next/image`) for print reliability. It has `robots: { index: false, follow: false }`.
+- Property detail and ficha pages share Sanity queries/types via `src/sanity/queries/propertyDetail.ts`.
+- Property detail page includes: "Ficha" button (opens ficha in new tab), "Compartir" (ShareButton), WhatsApp share icon, and "Consultar por WhatsApp" full-width button.
+- WhatsApp consultation URL is built from `siteSettings.whatsappNumber` with a pre-filled message including the property name.
+- Sold/rented properties display a status banner ribbon (CSS-only, positioned absolute) overlaying the image carousel.
+- `TextImageSection` displays images in large circles (full column width, `border-radius: 50%`, `aspect-ratio: 1/1`).

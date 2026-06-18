@@ -19,7 +19,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "pnpm start",
+    command: "pnpm exec serve out -l 3000",
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
   },

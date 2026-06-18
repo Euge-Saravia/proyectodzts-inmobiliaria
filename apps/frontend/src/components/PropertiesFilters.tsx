@@ -1,9 +1,15 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import {
+  useReducer,
+  useState,
+  type ReactNode,
+  type TransitionStartFunction,
+} from "react";
 import type { FilterOption } from "@/types/filters";
 import { parseMultiple } from "@/lib/filters";
+import ReferenceSearch from "./ReferenceSearch";
 import "./PropertiesFilters.css";
 
 interface PropertiesFiltersProps {
@@ -12,16 +18,271 @@ interface PropertiesFiltersProps {
   roomCounts: number[];
   isCollapsed: boolean;
   onToggleCollapse: () => void;
-  onFilteringChange?: (isFiltering: boolean) => void;
+  isPending: boolean;
+  startTransition: TransitionStartFunction;
 }
 
 type SearchParams = ReturnType<typeof useSearchParams>;
 
 interface PropertiesFiltersInnerProps extends PropertiesFiltersProps {
   searchParams: SearchParams;
-  isPending: boolean;
-  startTransition: (callback: () => void) => void;
 }
+
+type FilterState = {
+  operacion: string;
+  propiedad: string[];
+  localidad: string[];
+  dormitorios: string[];
+  soloDisponibles: boolean;
+  supMin: string;
+  supMax: string;
+};
+
+type FilterAction =
+  | { type: "SET_OPERACION"; value: string }
+  | { type: "TOGGLE_PROPIEDAD"; slug: string }
+  | { type: "TOGGLE_LOCALIDAD"; slug: string }
+  | { type: "TOGGLE_DORMITORIOS"; value: string }
+  | { type: "TOGGLE_SOLO_DISPONIBLES" }
+  | { type: "SET_SUP_MIN"; value: string }
+  | { type: "SET_SUP_MAX"; value: string }
+  | { type: "RESET" };
+
+const EMPTY_FILTERS: FilterState = {
+  operacion: "",
+  propiedad: [],
+  localidad: [],
+  dormitorios: [],
+  soloDisponibles: false,
+  supMin: "",
+  supMax: "",
+};
+
+function toggleInArray(arr: string[], value: string): string[] {
+  return arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value];
+}
+
+function filterReducer(state: FilterState, action: FilterAction): FilterState {
+  switch (action.type) {
+    case "SET_OPERACION":
+      return { ...state, operacion: action.value };
+    case "TOGGLE_PROPIEDAD":
+      return { ...state, propiedad: toggleInArray(state.propiedad, action.slug) };
+    case "TOGGLE_LOCALIDAD":
+      return { ...state, localidad: toggleInArray(state.localidad, action.slug) };
+    case "TOGGLE_DORMITORIOS":
+      return {
+        ...state,
+        dormitorios: toggleInArray(state.dormitorios, action.value),
+      };
+    case "TOGGLE_SOLO_DISPONIBLES":
+      return { ...state, soloDisponibles: !state.soloDisponibles };
+    case "SET_SUP_MIN":
+      return { ...state, supMin: action.value };
+    case "SET_SUP_MAX":
+      return { ...state, supMax: action.value };
+    case "RESET":
+      return EMPTY_FILTERS;
+  }
+}
+
+interface FilterAccordionSectionProps {
+  id: string;
+  label: string;
+  expanded: boolean;
+  onToggle: () => void;
+  bodyStyle?: React.CSSProperties;
+  children: ReactNode;
+}
+
+function FilterAccordionSection({
+  id,
+  label,
+  expanded,
+  onToggle,
+  bodyStyle,
+  children,
+}: FilterAccordionSectionProps) {
+  return (
+    <div className="mb-4">
+      <button
+        type="button"
+        className="btn btn-link p-0 d-flex align-items-center justify-content-between w-100 text-decoration-none"
+        onClick={onToggle}
+        aria-expanded={expanded}
+        aria-controls={id}
+      >
+        <span className="fw-semibold small text-uppercase text-muted">
+          {label}
+        </span>
+        <i className={`bi bi-chevron-${expanded ? "up" : "down"}`}></i>
+      </button>
+      <div
+        id={id}
+        className={`filters-section collapse${expanded ? " show mt-2" : ""}`}
+        style={bodyStyle}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+interface RadioOption {
+  value: string;
+  label: string;
+}
+
+interface FilterRadioGroupProps {
+  name: string;
+  idPrefix: string;
+  value: string;
+  options: RadioOption[];
+  onChange: (value: string) => void;
+}
+
+function FilterRadioGroup({
+  name,
+  idPrefix,
+  value,
+  options,
+  onChange,
+}: FilterRadioGroupProps) {
+  return (
+    <>
+      {options.map((opt) => {
+        const inputId = `${idPrefix}-${opt.value || "todos"}`;
+        return (
+          <div key={inputId} className="form-check">
+            <input
+              className="form-check-input"
+              type="radio"
+              name={name}
+              id={inputId}
+              checked={value === opt.value}
+              onChange={() => onChange(opt.value)}
+            />
+            <label className="form-check-label" htmlFor={inputId}>
+              {opt.label}
+            </label>
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
+interface CheckboxItem {
+  value: string;
+  label: string;
+}
+
+interface FilterCheckboxGroupProps {
+  idPrefix: string;
+  items: CheckboxItem[];
+  selected: string[];
+  onToggle: (value: string) => void;
+  emptyMessage?: string;
+}
+
+function FilterCheckboxGroup({
+  idPrefix,
+  items,
+  selected,
+  onToggle,
+  emptyMessage = "Sin opciones",
+}: FilterCheckboxGroupProps) {
+  if (items.length === 0) {
+    return <span className="text-muted small">{emptyMessage}</span>;
+  }
+
+  return (
+    <>
+      {items.map((item) => {
+        const inputId = `${idPrefix}-${item.value}`;
+        return (
+          <div key={inputId} className="form-check">
+            <input
+              className="form-check-input"
+              type="checkbox"
+              id={inputId}
+              checked={selected.includes(item.value)}
+              onChange={() => onToggle(item.value)}
+            />
+            <label className="form-check-label" htmlFor={inputId}>
+              {item.label}
+            </label>
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
+interface FilterRangeInputsProps {
+  minId: string;
+  maxId: string;
+  minLabel: string;
+  maxLabel: string;
+  minValue: string;
+  maxValue: string;
+  onMinChange: (value: string) => void;
+  onMaxChange: (value: string) => void;
+  placeholder?: string;
+}
+
+function FilterRangeInputs({
+  minId,
+  maxId,
+  minLabel,
+  maxLabel,
+  minValue,
+  maxValue,
+  onMinChange,
+  onMaxChange,
+  placeholder = "m²",
+}: FilterRangeInputsProps) {
+  return (
+    <div className="row g-2">
+      <div className="col-6">
+        <label htmlFor={minId} className="form-label small mb-1">
+          {minLabel}
+        </label>
+        <input
+          type="number"
+          inputMode="numeric"
+          min={0}
+          className="form-control form-control-sm"
+          id={minId}
+          placeholder={placeholder}
+          value={minValue}
+          onChange={(e) => onMinChange(e.target.value)}
+        />
+      </div>
+      <div className="col-6">
+        <label htmlFor={maxId} className="form-label small mb-1">
+          {maxLabel}
+        </label>
+        <input
+          type="number"
+          inputMode="numeric"
+          min={0}
+          className="form-control form-control-sm"
+          id={maxId}
+          placeholder={placeholder}
+          value={maxValue}
+          onChange={(e) => onMaxChange(e.target.value)}
+        />
+      </div>
+    </div>
+  );
+}
+
+const OPERACION_OPTIONS: RadioOption[] = [
+  { value: "", label: "Todas" },
+  { value: "venta", label: "Venta" },
+  { value: "alquiler", label: "Alquiler" },
+];
 
 function PropertiesFiltersInner({
   cities,
@@ -29,69 +290,63 @@ function PropertiesFiltersInner({
   roomCounts,
   isCollapsed,
   onToggleCollapse,
-  onFilteringChange,
   searchParams,
   isPending,
   startTransition,
 }: PropertiesFiltersInnerProps) {
   const router = useRouter();
   const [isOpenMobile, setIsOpenMobile] = useState(false);
-  const initialOperacion = searchParams.get("operacion") || "";
-  const initialPropiedad = parseMultiple(searchParams.get("propiedad"));
-  const initialLocalidad = parseMultiple(searchParams.get("localidad"));
+
   const initialDormitorios = parseMultiple(searchParams.get("dormitorios"));
+  const initialSupMin = searchParams.get("supmin") || "";
+  const initialSupMax = searchParams.get("supmax") || "";
+
+  const [filters, dispatch] = useReducer(filterReducer, undefined, () => ({
+    operacion: searchParams.get("operacion") || "",
+    propiedad: parseMultiple(searchParams.get("propiedad")),
+    localidad: parseMultiple(searchParams.get("localidad")),
+    dormitorios: initialDormitorios,
+    soloDisponibles: searchParams.get("disponibles") === "1",
+    supMin: initialSupMin,
+    supMax: initialSupMax,
+  }));
 
   const [expandedSections, setExpandedSections] = useState({
     operacion: true,
     propiedad: true,
     localidad: true,
     dormitorios: initialDormitorios.length > 0,
+    superficie: initialSupMin !== "" || initialSupMax !== "",
   });
 
-  const [operacion, setOperacion] = useState(initialOperacion);
-  const [propiedad, setPropiedad] = useState<string[]>(initialPropiedad);
-  const [localidad, setLocalidad] = useState<string[]>(initialLocalidad);
-  const [dormitorios, setDormitorios] = useState<string[]>(initialDormitorios);
-
   const activeFilterCount =
-    (operacion ? 1 : 0) +
-    propiedad.length +
-    localidad.length +
-    dormitorios.length;
+    (filters.operacion ? 1 : 0) +
+    filters.propiedad.length +
+    filters.localidad.length +
+    filters.dormitorios.length +
+    (filters.soloDisponibles ? 1 : 0) +
+    (filters.supMin || filters.supMax ? 1 : 0);
 
   const toggleSection = (key: keyof typeof expandedSections) => {
-    setExpandedSections((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
-  };
-
-  useEffect(() => {
-    if (onFilteringChange) {
-      onFilteringChange(isPending);
-    }
-  }, [isPending, onFilteringChange]);
-
-  const toggleArrayValue = (
-    arr: string[],
-    value: string,
-    setter: (val: string[]) => void,
-  ) => {
-    if (arr.includes(value)) {
-      setter(arr.filter((v) => v !== value));
-    } else {
-      setter([...arr, value]);
-    }
+    setExpandedSections((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   const applyFilters = () => {
     const params = new URLSearchParams();
 
-    if (operacion) params.set("operacion", operacion);
-    if (propiedad.length > 0) params.set("propiedad", propiedad.join(","));
-    if (localidad.length > 0) params.set("localidad", localidad.join(","));
-    if (dormitorios.length > 0)
-      params.set("dormitorios", dormitorios.join(","));
+    if (filters.operacion) params.set("operacion", filters.operacion);
+    if (filters.propiedad.length > 0)
+      params.set("propiedad", filters.propiedad.join(","));
+    if (filters.localidad.length > 0)
+      params.set("localidad", filters.localidad.join(","));
+    if (filters.dormitorios.length > 0)
+      params.set("dormitorios", filters.dormitorios.join(","));
+    if (filters.soloDisponibles) params.set("disponibles", "1");
+    if (filters.supMin) params.set("supmin", filters.supMin);
+    if (filters.supMax) params.set("supmax", filters.supMax);
+
+    const orden = searchParams.get("orden");
+    if (orden) params.set("orden", orden);
 
     const queryString = params.toString();
     startTransition(() => {
@@ -101,221 +356,112 @@ function PropertiesFiltersInner({
   };
 
   const clearFilters = () => {
-    setOperacion("");
-    setPropiedad([]);
-    setLocalidad([]);
-    setDormitorios([]);
+    dispatch({ type: "RESET" });
+    const orden = searchParams.get("orden");
     startTransition(() => {
-      router.push("/propiedades");
+      router.push(orden ? `/propiedades?orden=${orden}` : "/propiedades");
     });
     setIsOpenMobile(false);
   };
 
   const filterForm = (
     <>
-      {/* Operación - Radio buttons */}
+      <ReferenceSearch />
+
       <div className="mb-4">
-        <button
-          type="button"
-          className="btn btn-link p-0 d-flex align-items-center justify-content-between w-100 text-decoration-none"
-          onClick={() => toggleSection("operacion")}
-          aria-expanded={expandedSections.operacion}
-          aria-controls="filters-operacion"
-        >
-          <span className="fw-semibold small text-uppercase text-muted">
-            Operación
-          </span>
-          <i
-            className={`bi bi-chevron-${expandedSections.operacion ? "up" : "down"}`}
-          ></i>
-        </button>
-        <div
-          id="filters-operacion"
-          className={`filters-section collapse${expandedSections.operacion ? " show mt-2" : ""}`}
-        >
-          <div className="form-check">
-            <input
-              className="form-check-input"
-              type="radio"
-              name="operacion"
-              id="operacion-todos"
-              checked={operacion === ""}
-              onChange={() => setOperacion("")}
-            />
-            <label className="form-check-label" htmlFor="operacion-todos">
-              Todas
-            </label>
-          </div>
-          <div className="form-check">
-            <input
-              className="form-check-input"
-              type="radio"
-              name="operacion"
-              id="operacion-venta"
-              checked={operacion === "venta"}
-              onChange={() => setOperacion("venta")}
-            />
-            <label className="form-check-label" htmlFor="operacion-venta">
-              Venta
-            </label>
-          </div>
-          <div className="form-check">
-            <input
-              className="form-check-input"
-              type="radio"
-              name="operacion"
-              id="operacion-alquiler"
-              checked={operacion === "alquiler"}
-              onChange={() => setOperacion("alquiler")}
-            />
-            <label className="form-check-label" htmlFor="operacion-alquiler">
-              Alquiler
-            </label>
-          </div>
+        <div className="form-check">
+          <input
+            className="form-check-input"
+            type="checkbox"
+            id="solo-disponibles"
+            checked={filters.soloDisponibles}
+            onChange={() => dispatch({ type: "TOGGLE_SOLO_DISPONIBLES" })}
+          />
+          <label className="form-check-label" htmlFor="solo-disponibles">
+            Solo disponibles
+          </label>
         </div>
       </div>
 
-      {/* Tipo de propiedad - Checkboxes */}
-      <div className="mb-4">
-        <button
-          type="button"
-          className="btn btn-link p-0 d-flex align-items-center justify-content-between w-100 text-decoration-none"
-          onClick={() => toggleSection("propiedad")}
-          aria-expanded={expandedSections.propiedad}
-          aria-controls="filters-propiedad"
-        >
-          <span className="fw-semibold small text-uppercase text-muted">
-            Tipo de propiedad
-          </span>
-          <i
-            className={`bi bi-chevron-${expandedSections.propiedad ? "up" : "down"}`}
-          ></i>
-        </button>
-        <div
-          id="filters-propiedad"
-          className={`filters-section collapse${expandedSections.propiedad ? " show mt-2" : ""}`}
-        >
-          {propertyTypes.map((type) => (
-            <div key={type.slug} className="form-check">
-              <input
-                className="form-check-input"
-                type="checkbox"
-                id={`propiedad-${type.slug}`}
-                checked={propiedad.includes(type.slug)}
-                onChange={() =>
-                  toggleArrayValue(propiedad, type.slug, setPropiedad)
-                }
-              />
-              <label
-                className="form-check-label"
-                htmlFor={`propiedad-${type.slug}`}
-              >
-                {type.name}
-              </label>
-            </div>
-          ))}
-          {propertyTypes.length === 0 && (
-            <span className="text-muted small">Sin opciones</span>
-          )}
-        </div>
-      </div>
+      <FilterAccordionSection
+        id="filters-operacion"
+        label="Operación"
+        expanded={expandedSections.operacion}
+        onToggle={() => toggleSection("operacion")}
+      >
+        <FilterRadioGroup
+          name="operacion"
+          idPrefix="operacion"
+          value={filters.operacion}
+          options={OPERACION_OPTIONS}
+          onChange={(value) => dispatch({ type: "SET_OPERACION", value })}
+        />
+      </FilterAccordionSection>
 
-      {/* Localidad - Checkboxes */}
-      <div className="mb-4">
-        <button
-          type="button"
-          className="btn btn-link p-0 d-flex align-items-center justify-content-between w-100 text-decoration-none"
-          onClick={() => toggleSection("localidad")}
-          aria-expanded={expandedSections.localidad}
-          aria-controls="filters-localidad"
-        >
-          <span className="fw-semibold small text-uppercase text-muted">
-            Localidad
-          </span>
-          <i
-            className={`bi bi-chevron-${expandedSections.localidad ? "up" : "down"}`}
-          ></i>
-        </button>
-        <div
-          id="filters-localidad"
-          className={`filters-section collapse${expandedSections.localidad ? " show mt-2" : ""}`}
-          style={{ maxHeight: 200, overflowY: "auto" }}
-        >
-          {cities.map((city) => (
-            <div key={city.slug} className="form-check">
-              <input
-                className="form-check-input"
-                type="checkbox"
-                id={`localidad-${city.slug}`}
-                checked={localidad.includes(city.slug)}
-                onChange={() =>
-                  toggleArrayValue(localidad, city.slug, setLocalidad)
-                }
-              />
-              <label
-                className="form-check-label"
-                htmlFor={`localidad-${city.slug}`}
-              >
-                {city.name}
-              </label>
-            </div>
-          ))}
-          {cities.length === 0 && (
-            <span className="text-muted small">Sin opciones</span>
-          )}
-        </div>
-      </div>
+      <FilterAccordionSection
+        id="filters-propiedad"
+        label="Tipo de propiedad"
+        expanded={expandedSections.propiedad}
+        onToggle={() => toggleSection("propiedad")}
+      >
+        <FilterCheckboxGroup
+          idPrefix="propiedad"
+          items={propertyTypes.map((t) => ({ value: t.slug, label: t.name }))}
+          selected={filters.propiedad}
+          onToggle={(slug) => dispatch({ type: "TOGGLE_PROPIEDAD", slug })}
+        />
+      </FilterAccordionSection>
 
-      {/* Dormitorios - Checkboxes */}
-      <div className="mb-4">
-        <button
-          type="button"
-          className="btn btn-link p-0 d-flex align-items-center justify-content-between w-100 text-decoration-none"
-          onClick={() => toggleSection("dormitorios")}
-          aria-expanded={expandedSections.dormitorios}
-          aria-controls="filters-dormitorios"
-        >
-          <span className="fw-semibold small text-uppercase text-muted">
-            Dormitorios
-          </span>
-          <i
-            className={`bi bi-chevron-${expandedSections.dormitorios ? "up" : "down"}`}
-          ></i>
-        </button>
-        <div
-          id="filters-dormitorios"
-          className={`filters-section collapse${expandedSections.dormitorios ? " show mt-2" : ""}`}
-        >
-          {roomCounts.map((count) => (
-            <div key={count} className="form-check">
-              <input
-                className="form-check-input"
-                type="checkbox"
-                id={`dormitorios-${count}`}
-                checked={dormitorios.includes(count.toString())}
-                onChange={() =>
-                  toggleArrayValue(
-                    dormitorios,
-                    count.toString(),
-                    setDormitorios,
-                  )
-                }
-              />
-              <label
-                className="form-check-label"
-                htmlFor={`dormitorios-${count}`}
-              >
-                {count} {count === 1 ? "dormitorio" : "dormitorios"}
-              </label>
-            </div>
-          ))}
-          {roomCounts.length === 0 && (
-            <span className="text-muted small">Sin opciones</span>
-          )}
-        </div>
-      </div>
+      <FilterAccordionSection
+        id="filters-localidad"
+        label="Localidad"
+        expanded={expandedSections.localidad}
+        onToggle={() => toggleSection("localidad")}
+        bodyStyle={{ maxHeight: 200, overflowY: "auto" }}
+      >
+        <FilterCheckboxGroup
+          idPrefix="localidad"
+          items={cities.map((c) => ({ value: c.slug, label: c.name }))}
+          selected={filters.localidad}
+          onToggle={(slug) => dispatch({ type: "TOGGLE_LOCALIDAD", slug })}
+        />
+      </FilterAccordionSection>
 
-      {/* Action buttons */}
+      <FilterAccordionSection
+        id="filters-dormitorios"
+        label="Dormitorios"
+        expanded={expandedSections.dormitorios}
+        onToggle={() => toggleSection("dormitorios")}
+      >
+        <FilterCheckboxGroup
+          idPrefix="dormitorios"
+          items={roomCounts.map((count) => ({
+            value: count.toString(),
+            label: `${count} ${count === 1 ? "dormitorio" : "dormitorios"}`,
+          }))}
+          selected={filters.dormitorios}
+          onToggle={(value) => dispatch({ type: "TOGGLE_DORMITORIOS", value })}
+        />
+      </FilterAccordionSection>
+
+      <FilterAccordionSection
+        id="filters-superficie"
+        label="Superficie (m²)"
+        expanded={expandedSections.superficie}
+        onToggle={() => toggleSection("superficie")}
+      >
+        <FilterRangeInputs
+          minId="superficie-min"
+          maxId="superficie-max"
+          minLabel="Desde"
+          maxLabel="Hasta"
+          minValue={filters.supMin}
+          maxValue={filters.supMax}
+          onMinChange={(value) => dispatch({ type: "SET_SUP_MIN", value })}
+          onMaxChange={(value) => dispatch({ type: "SET_SUP_MAX", value })}
+        />
+      </FilterAccordionSection>
+
       <div className="d-flex flex-column gap-2 pt-2 border-top">
         <button
           type="button"
@@ -343,7 +489,6 @@ function PropertiesFiltersInner({
 
   return (
     <>
-      {/* Mobile: Toggle button */}
       <button
         className="btn btn-outline-primary w-100 d-flex align-items-center justify-content-between d-lg-none mb-4"
         type="button"
@@ -363,7 +508,6 @@ function PropertiesFiltersInner({
         <i className={`bi bi-chevron-${isOpenMobile ? "up" : "down"}`}></i>
       </button>
 
-      {/* Desktop: Collapse/Expand button in sidebar */}
       {isCollapsed && (
         <div className="bg-light rounded-3 p-3 d-none d-lg-block">
           <button
@@ -384,7 +528,6 @@ function PropertiesFiltersInner({
         </div>
       )}
 
-      {/* Single filter form - shown/hidden based on viewport and state */}
       {(!isCollapsed || isOpenMobile) && (
         <div
           id="filters-form"
@@ -394,7 +537,6 @@ function PropertiesFiltersInner({
             ${isCollapsed ? "d-lg-none" : ""}
           `}
         >
-          {/* Desktop: Header with collapse button */}
           <div className="d-none d-lg-flex align-items-center justify-content-between mb-3">
             <h5 className="mb-0 fw-bold">Filtros</h5>
             <button
@@ -408,7 +550,6 @@ function PropertiesFiltersInner({
             </button>
           </div>
 
-          {/* Actual filter form */}
           <div className="bg-light rounded-3 p-3">{filterForm}</div>
         </div>
       )}
@@ -419,14 +560,11 @@ function PropertiesFiltersInner({
 export default function PropertiesFilters(props: PropertiesFiltersProps) {
   const searchParams = useSearchParams();
   const searchKey = searchParams.toString();
-  const [isPending, startTransition] = useTransition();
 
   return (
     <PropertiesFiltersInner
       key={searchKey}
       searchParams={searchParams}
-      isPending={isPending}
-      startTransition={startTransition}
       {...props}
     />
   );

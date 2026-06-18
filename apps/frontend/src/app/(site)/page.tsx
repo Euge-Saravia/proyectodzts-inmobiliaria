@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { cacheLife, cacheTag } from "next/cache";
 import { defineQuery } from "next-sanity";
 import type { SanityImageSource } from "@sanity/image-url";
 import { sanityFetch } from "@/sanity/lib/live";
@@ -43,15 +42,15 @@ export async function generateMetadata(): Promise<Metadata> {
   return metadata;
 }
 
-const MAP_ADDRESS_QUERY = defineQuery(`
-  *[_type == "siteSettings"][0].address
+const MAP_DATA_QUERY = defineQuery(`
+  *[_type == "siteSettings"][0] {
+    address,
+    mapEmbedUrl
+  }
 `);
 
-async function getCachedMapAddress() {
-  "use cache";
-  cacheLife("hours");
-  cacheTag("siteSettings");
-  const { data } = await sanityFetch({ query: MAP_ADDRESS_QUERY });
+async function getCachedMapData() {
+  const { data } = await sanityFetch({ query: MAP_DATA_QUERY });
   return data;
 }
 
@@ -71,8 +70,15 @@ async function HomeSections() {
 }
 
 async function MapSectionWrapper() {
-  const address = await getCachedMapAddress();
-  return <MapSection address={address} title="Ubicación de la oficina" />;
+  const data = await getCachedMapData();
+  return (
+    <MapSection
+      id="contacto"
+      address={data?.address}
+      embedUrl={data?.mapEmbedUrl}
+      title="Ubicación de la oficina"
+    />
+  );
 }
 
 function FeaturedPropertiesFallback({ heading }: { heading?: string | null }) {

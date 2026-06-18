@@ -1,6 +1,8 @@
 import type { MetadataRoute } from "next";
 import { client } from "@/sanity/lib/client";
 
+export const dynamic = "force-static";
+
 interface PropertySlug {
   slug: string;
   _updatedAt: string;
@@ -14,7 +16,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   const properties = await client.fetch<PropertySlug[]>(`
-    *[_type == "property" && defined(slug.current)] {
+    *[_type == "property" && defined(slug.current) && published != false] {
       "slug": slug.current,
       _updatedAt
     }
