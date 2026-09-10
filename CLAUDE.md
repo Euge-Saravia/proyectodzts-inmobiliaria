@@ -64,6 +64,7 @@ The main Opus agent delegates coding tasks to lighter models via custom agents i
 | **Implement** | `implementer` | Sonnet | Components, bug fixes, schema changes, CSS, lint fixes, new routes, caching updates |
 | **DevOps** | `devops` | Sonnet | GitHub Actions workflows, CI failures, releases (dev → main), Dependabot PRs, deploy issues |
 | **Triage** | `triage` | Opus | PR/issue triage: merge-readiness assessment, priority ranking, recommended merge order, release backlog reports |
+| **UI Developer** | `ui-developer` | Opus | Visual design options, HTML prototypes, implementing the approved design as components + CSS within the brand style |
 | **Architect** | _(main agent)_ | Opus | Multi-system debugging, architecture decisions, planning, PR reviews, new patterns |
 
 ### Delegate to `implementer` (Sonnet) when:
@@ -102,6 +103,15 @@ The devops agent does **not** change application source code — if a CI failure
 - Matching open Dependabot security alerts to pending dependency PRs
 
 The triage agent **decides and recommends — it never merges, closes, or edits code**. It may apply labels/comments only when explicitly asked. Execution routes onward: merges/releases to `devops`, code fixes to `implementer`/`quick-fix`, business-priority calls to the user.
+
+### Delegate to `ui-developer` (Opus) when:
+
+- Designing a new page, section, or component where the look is not yet decided (needs 2–3 visual options and a recommendation)
+- Building clickable HTML prototypes for review before committing to an implementation
+- Restyling or redesigning existing UI to fit the brand (tokens in `variables.css`, Bootstrap 5, existing component patterns)
+- Implementing an approved design as React components + CSS
+
+The architect writes the brief (requirements, constraints, target page/component); the agent proposes options in phase 1 and implements only the chosen one in phase 2. It is **UI-only**: no Sanity queries/schema, caching, workflows, or e2e tests — it reports data or selector needs back for routing to `implementer`. Plain component/CSS changes with an already-decided look still go to `implementer`.
 
 ### Keep on Opus (handle directly) when:
 
