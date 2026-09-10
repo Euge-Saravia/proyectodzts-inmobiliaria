@@ -1,3 +1,5 @@
+import TrackedLink from "@/components/TrackedLink";
+import { ANALYTICS_EVENT } from "@/lib/analytics";
 import "./WhatsAppButton.css";
 
 type WhatsAppButtonProps = {
@@ -11,14 +13,16 @@ export default function WhatsAppButton({ whatsappNumber, whatsappMessage }: What
     : `https://wa.me/${whatsappNumber}`;
 
   return (
-    <a
+    <TrackedLink
       href={url}
       target="_blank"
       rel="noopener noreferrer"
       className="whatsapp-float"
       aria-label="Contactar por WhatsApp"
+      eventName={ANALYTICS_EVENT.whatsappContact}
+      eventParams={{ location: "float" }}
     >
       <i className="bi bi-whatsapp"></i>
-    </a>
+    </TrackedLink>
   );
 }

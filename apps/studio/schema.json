@@ -139,6 +139,13 @@
         },
         "optional": true
       },
+      "reference": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "string"
+        },
+        "optional": true
+      },
       "subtitle": {
         "type": "objectAttribute",
         "value": {
@@ -421,6 +428,10 @@
             },
             {
               "type": "string",
+              "value": "reservado"
+            },
+            {
+              "type": "string",
               "value": "vendido"
             },
             {
@@ -428,6 +439,13 @@
               "value": "alquilado"
             }
           ]
+        },
+        "optional": true
+      },
+      "published": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "boolean"
         },
         "optional": true
       },
@@ -482,6 +500,27 @@
         },
         "optional": true
       },
+      "sizeLand": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "number"
+        },
+        "optional": true
+      },
+      "sizeCovered": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "number"
+        },
+        "optional": true
+      },
+      "sizeTotal": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "number"
+        },
+        "optional": true
+      },
       "size": {
         "type": "objectAttribute",
         "value": {
@@ -510,13 +549,6 @@
               "value": "ARS"
             }
           ]
-        },
-        "optional": true
-      },
-      "featured": {
-        "type": "objectAttribute",
-        "value": {
-          "type": "boolean"
         },
         "optional": true
       },
@@ -1079,6 +1111,13 @@
         },
         "optional": true
       },
+      "mapEmbedUrl": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "string"
+        },
+        "optional": true
+      },
       "whatsappNumber": {
         "type": "objectAttribute",
         "value": {
@@ -1387,6 +1426,36 @@
     }
   },
   {
+    "type": "type",
+    "name": "property.reference",
+    "value": {
+      "type": "object",
+      "attributes": {
+        "_ref": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string"
+          }
+        },
+        "_type": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string",
+            "value": "reference"
+          }
+        },
+        "_weak": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "boolean"
+          },
+          "optional": true
+        }
+      },
+      "dereferencesTo": "property"
+    }
+  },
+  {
     "name": "homePage",
     "type": "document",
     "attributes": {
@@ -1533,6 +1602,28 @@
         "type": "objectAttribute",
         "value": {
           "type": "string"
+        },
+        "optional": true
+      },
+      "featuredProperties": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "array",
+          "of": {
+            "type": "object",
+            "attributes": {
+              "_key": {
+                "type": "objectAttribute",
+                "value": {
+                  "type": "string"
+                }
+              }
+            },
+            "rest": {
+              "type": "inline",
+              "name": "property.reference"
+            }
+          }
         },
         "optional": true
       },

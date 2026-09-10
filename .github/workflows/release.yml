@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  # Every push to main is a prod release: release-PR merges and occasional
+  # direct security-bump PRs. No path filter on purpose.
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+# Serialize releases. Note GitHub keeps at most one pending run per group:
+# under 3+ rapid pushes to main a pending run can be cancelled, and the
+# skipped push's PRs simply fold into the next release's notes.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      # fetch-depth: 0 + fetch-tags so the tag-collision check below can see
+      # every existing tag, not just the ones near HEAD.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Compute CalVer tag
+        id: tag
+        run: |
+          export TZ=America/Argentina/Buenos_Aires
+          base="v$(date +%Y.%m.%d)"
+          tag="$base"
+          n=1
+          while git rev-parse -q --verify "refs/tags/$tag" >/dev/null; do
+            n=$((n+1))
+            tag="$base.$n"
+          done
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      # --generate-notes compares against the most recent previous release
+      # automatically, so no explicit start tag is needed. Categorization and
+      # the `release`-label exclusion come from .github/release.yml.
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.tag.outputs.tag }}" \
+            --target "$GITHUB_SHA" \
+            --title "${{ steps.tag.outputs.tag }}" \
+            --generate-notes

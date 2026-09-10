@@ -28,14 +28,14 @@ test.describe("Home Page", () => {
   }) => {
     await page.selectOption("#operacion", "venta");
     await page.click("button.btn-custom");
-    await expect(page).toHaveURL(/\/propiedades\?.*operacion=venta/);
+    await expect(page).toHaveURL(/\/propiedades\/?\?.*operacion=venta/);
   });
 
   test("search with no selection navigates to /propiedades", async ({
     page,
   }) => {
     await page.click("button.btn-custom");
-    await expect(page).toHaveURL(/\/propiedades$/);
+    await expect(page).toHaveURL(/\/propiedades\/?$/);
   });
 
   test("featured properties section is present", async ({ page }) => {

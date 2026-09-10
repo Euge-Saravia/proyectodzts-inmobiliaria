@@ -80,55 +80,187 @@ cp apps/studio/.env.example apps/studio/.env.local
 
 Get the Sanity project ID and dataset from your [Sanity project settings](https://www.sanity.io/manage). The Web3Forms key is needed for the contact form — get one at [web3forms.com](https://web3forms.com).
 
-## Cache Revalidation Webhook
+## Static Export and Deployment
 
-The frontend uses on-demand cache revalidation so content changes published in Sanity appear immediately. This requires a webhook configured in the Sanity dashboard.
-
-### 1. Generate a secret
+The frontend is a static site (`output: "export"` in `next.config.ts`).
 
 ```bash
-openssl rand -hex 32
+pnpm --filter dzts-website build   # writes apps/frontend/out/
 ```
 
-Add the output as `SANITY_REVALIDATE_SECRET` in `apps/frontend/.env.local`.
+Upload the contents of `apps/frontend/out/` to shared hosting. The bundled `.htaccess` (in `apps/frontend/public/.htaccess`, copied into `out/` at build) sets security headers, normalises trailing slashes, and wires up the custom 404 page. Replace with the equivalent nginx config if the host is nginx.
 
-### 2. Create the webhook in Sanity
+Content updates require a rebuild and re-upload. For content editors, this is fully automated — see "Automated Deploys" below. The manual checklist is kept here for the first-ever deploy and as a fallback when the automation isn't available.
 
-Go to **sanity.io/manage → Project → API → Webhooks → Add webhook** and configure:
+### Manual deployment checklist
+
+#### Before building
+
+1. **Checkout and sync `dev`** (or whichever branch maps to production):
+   ```bash
+   git checkout dev && git pull
+   ```
+2. **Set production env vars in `apps/frontend/.env.local`.** These get baked into the static bundle at build time.
+   ```
+   NEXT_PUBLIC_SANITY_PROJECT_ID=<project-id>
+   NEXT_PUBLIC_SANITY_DATASET=production       # NOT "development"
+   NEXT_PUBLIC_SITE_URL=https://www.dzts.com.ar
+   NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX  # or leave blank
+   SITE_ENV=production                         # required for robots.txt to emit Allow: /
+   ```
+   `NEXT_PUBLIC_SITE_URL` drives the canonical URL, sitemap, and OpenGraph tags. Without it, `sitemap.xml` emits relative URLs and `llms.txt` is skipped. Without `SITE_ENV=production`, `robots.txt` emits `Disallow: /` and the site gets deindexed from search engines.
+3. **Confirm the production Sanity dataset has the expected content.** If you've been editing in `development`, either copy docs across (`sanity dataset export` / `import`) or point the deploy at the `development` dataset intentionally.
+
+#### Build
+
+4. **Install with a frozen lockfile** (matches CI exactly):
+   ```bash
+   pnpm install --frozen-lockfile
+   ```
+5. **Clean previous outputs, then build:**
+   ```bash
+   rm -rf apps/frontend/.next apps/frontend/out
+   pnpm --filter dzts-website build
+   ```
+6. **Smoke-test locally** before uploading anything:
+   ```bash
+   pnpm --filter dzts-website start
+   ```
+   Visit `http://localhost:3000/`, click into a property, test `/propiedades` filters, and hit a non-existent URL to confirm the 404 page.
+7. **Verify the build output:**
+    - `apps/frontend/out/.htaccess` is present (easiest file to lose — breaks trailing-slash rewrites and security headers).
+    - `apps/frontend/out/sitemap.xml` references the production URL (not localhost, not relative).
+    - `apps/frontend/out/robots.txt` says `Allow: /`. If it says `Disallow: /`, `SITE_ENV` was not set to `production` — rebuild before uploading.
+    - `apps/frontend/out/llms.txt` exists.
+
+#### Backup the current live site (first deploy only)
+
+8. Connect to FTP, navigate to the webroot (e.g. `/public_html/`).
+9. Create `/public_html/backup/` and move the current live site into it. FTP clients "move" by downloading and re-uploading — slow and risky for a live site. Prefer:
+    - **SSH or cPanel File Manager** to do a server-side `mv`, or
+    - **Download the live site to local first** as a true backup, then delete over FTP and upload the new build.
+10. Add a minimal `.htaccess` inside `/public_html/backup/` to prevent directory listing:
+    ```apache
+    Options -Indexes
+    ```
+
+#### Upload
+
+11. Upload the **contents** of `apps/frontend/out/` to `/public_html/` (not the `out/` folder itself). Make sure **dotfiles are included** — `.htaccess` is the critical one, and many FTP clients hide dotfiles by default. In FileZilla: Server menu → Force showing hidden files.
+12. After upload, confirm on the server:
+    - `/public_html/.htaccess` exists.
+    - `/public_html/index.html` has a fresh modified time.
+    - `/public_html/backup/` is still intact and reachable at `https://www.dzts.com.ar/backup/`.
+
+#### Post-deploy smoke test
+
+13. Hard-reload in an incognito window (`Ctrl/Cmd+Shift+N`, then `Ctrl/Cmd+F5`).
+14. Check in this order:
+    - Home page renders; hero image and office map pin appear.
+    - `/propiedades/` lists properties (test both `/propiedades` and `/propiedades/` — the `.htaccess` rewrite should handle both).
+    - A property detail page renders with map, JSON-LD, and Ficha button.
+    - `/nonexistent-url` shows the branded 404.
+    - `/sitemap.xml` and `/robots.txt` load correctly, with `robots.txt` saying `Allow: /`.
+15. If the host has Cloudflare or a CDN in front, purge its cache after deploy — visitors may see cached old assets for up to an hour otherwise.
+
+#### First-deploy-only gotchas
+
+- **MIME types.** Some shared hosts don't serve `.webp`, `.woff2`, `.mjs`, or `.avif` with the right `Content-Type`. If DevTools shows the file downloading with the wrong type, add `AddType` rules to `.htaccess`.
+- **Case-sensitive paths.** Local filesystems are usually case-insensitive; the server likely isn't. `<img src="/Images/foo.jpg">` that works locally may 404 on the server.
+- **Trailing-slash redirect loop.** The `.htaccess` rewrite adds trailing slashes. If the host *also* adds them, you get a redirect loop. Check DevTools → Network for `301 → 301 → 301` on a page and remove one of the rules.
+- **Subdomains pointed at folders under `/public_html/`** (e.g. `bak.dzts.com.ar` → `/public_html/bak/`) inherit non-rewrite directives from the parent `.htaccess` — including `DirectoryIndex index.html`. If the subdomain serves a PHP app (or anything that isn't `index.html`), it must declare its own `.htaccess` with both `RewriteEngine On` (which shadows the parent's rewrites and prevents the canonical-host redirect from sweeping it into `www.dzts.com.ar`) and `DirectoryIndex index.php` (so the bare `/` resolves instead of 403'ing). Without the latter, the inherited `index.html` lookup fails and `Options -Indexes` falls through to Forbidden.
+
+## Automated Deploys (Sanity publish → shared hosting)
+
+The workflow at `.github/workflows/deploy.yml` rebuilds the site and uploads it over FTP. The content editor only ever touches Sanity Studio — the rest happens in the background.
+
+### Triggers
+
+- **`repository_dispatch: sanity-publish`** — fired by a Sanity webhook when a document is published. This is the editor-facing path.
+- **Push to `main`** (paths `apps/frontend/**` or the workflow file) — auto-deploys code changes after a PR merge.
+- **Manual** — GitHub → Actions → "Deploy Frontend" → Run workflow, as a fallback.
+
+A concurrency group (`deploy-frontend`) coalesces rapid-fire triggers into a single deploy.
+
+### One-time setup
+
+Production and preview run against different Sanity projects, so credentials are scoped through GitHub Environments rather than repo-level variables. Each workflow binds to the right environment (`deploy.yml` → `Production`, `e2e.yml` → `Preview`); `ci.yml` uses placeholder values and needs no environment.
+
+**1. GitHub Environments** (Settings → Environments). Create two:
+
+- **`Production`** — used by `deploy.yml`. Restrict deployments to the `main` branch and add a required reviewer for the first few runs as a safety belt.
+- **`Preview`** — used by `e2e.yml` for PR builds. No branch restriction, no required reviewer.
+
+**2. `Production` environment** — add the following:
+
+| Type | Name | Value |
+|------|------|-------|
+| Variable | `NEXT_PUBLIC_SANITY_PROJECT_ID` | Production Sanity project ID |
+| Variable | `NEXT_PUBLIC_SANITY_DATASET` | Sanity dataset name (typically `production`) |
+| Variable | `NEXT_PUBLIC_SITE_URL` | Live site URL, e.g. `https://www.dzts.com.ar` |
+| Variable | `NEXT_PUBLIC_GA_MEASUREMENT_ID` | (optional) GA4 measurement ID |
+| Secret | `FTP_SERVER` | FTP host (e.g. `p1000115.ferozo.com`) |
+| Secret | `FTP_USERNAME` | FTP username |
+| Secret | `FTP_PASSWORD` | FTP password |
+| Secret | `FTP_SERVER_DIR` | Remote webroot, must end with `/` (e.g. `/public_html/`) |
+
+**3. `Preview` environment** — add the non-prod Sanity project's `NEXT_PUBLIC_SANITY_PROJECT_ID` and `NEXT_PUBLIC_SANITY_DATASET` as **Secrets** (`e2e.yml` reads them as `secrets.*`, not `vars.*`).
+
+If any of these names also exist as repo-level Variables/Secrets from earlier setup, delete them — environment values take precedence, but leaving repo-level duplicates around invites silent overrides.
+
+**4. GitHub fine-grained PAT for Sanity → GitHub**:
+
+Create at https://github.com/settings/personal-access-tokens with:
+- Repository access: only this repo
+- Permission: **Contents: Read**, **Actions: Write**
+
+**4. Sanity webhook** (sanity.io/manage → Project → API → Webhooks → Add webhook):
 
 | Setting | Value |
 |---------|-------|
-| Name | `Revalidate Next.js cache` |
-| URL | `https://<your-domain>/api/revalidate` |
-| Dataset | your dataset name |
+| Name | `Deploy frontend` |
+| URL | `https://api.github.com/repos/<owner>/<repo>/dispatches` |
+| Dataset | your dataset |
 | Trigger on | Create, Update, Delete |
 | Filter | `_type in ["property", "siteSettings", "homePage", "propiedadesPage", "city", "propertyTypeCategory"]` |
-| Projection | `{_type}` |
-| Secret | same value as `SANITY_REVALIDATE_SECRET` |
+| Projection | `{ "event_type": "sanity-publish", "client_payload": { "_type": _type, "_id": _id } }` |
+| HTTP method | `POST` |
+| HTTP headers | `Authorization: Bearer <PAT>` and `Accept: application/vnd.github+json` |
+| API version | `v2021-03-25` or later |
 
-Without the webhook (e.g. local development), cache entries still expire based on their `cacheLife` TTL (`"minutes"` or `"hours"`).
+Once this is in place, publishing in Sanity triggers a new run under GitHub → Actions within seconds.
 
-### Testing locally
+### Editor workflow
 
-With the dev server running, you can simulate a webhook call using curl. Replace `YOUR_SECRET` with your `SANITY_REVALIDATE_SECRET` value and `_type` with the Sanity document type to revalidate:
+Editing and publishing a property in Sanity Studio. That's it. A deploy kicks off automatically and finishes in ~2 minutes — the live site reflects the change shortly after.
+
+If a deploy fails, GitHub sends an email to the repo watchers. To retry, open Actions → latest run → "Re-run failed jobs", or just republish in Sanity.
+
+### Vercel preview builds
+
+The repo is also connected to a Vercel project, but production lives on the FTP host — Vercel only serves PR/`dev` previews. To prevent `main` pushes from producing a Vercel deployment that could be mistaken for production, the project's **Settings → Git → Ignored Build Step** is set to:
 
 ```bash
-BODY='{"_type":"property"}'
-SECRET="YOUR_SECRET"
-TS=$(date +%s%3N)
-SIG=$(echo -n "${TS}.${BODY}" \
-  | openssl dgst -sha256 -hmac "$SECRET" -binary \
-  | openssl base64 \
-  | tr '+/' '-_' | tr -d '=')
-
-curl -s http://localhost:3000/api/revalidate \
-  -X POST \
-  -H "Content-Type: application/json" \
-  -H "sanity-webhook-signature: t=${TS},v1=${SIG}" \
-  -d "$BODY"
+if [ "$VERCEL_GIT_COMMIT_REF" = "main" ]; then exit 0; else exit 1; fi
 ```
 
-A successful response looks like: `{"revalidated":true,"tag":"property"}`
+This skips Vercel builds on `main` (status: "Ignored") while letting `dev` and PR previews build normally. Vercel and GitHub Actions are independent environments — Vercel uses its own env vars defined in the Vercel project; GitHub Actions uses the GitHub Environments described above. Don't expect them to share secrets.
+
+### Schema changes
+
+Schema edits in `apps/studio/schemaTypes/` need the frontend's TypeScript types in `apps/frontend/src/sanity/types.ts` regenerated and committed alongside, because the FTP build runs against committed types in a clean checkout. When you change a schema:
+
+```bash
+pnpm --filter dzts-studio typegen   # regenerate apps/frontend/src/sanity/types.ts
+git add apps/frontend/src/sanity/types.ts apps/studio/schemaTypes/
+git commit -m "schema: <change description>"
+```
+
+The Studio deploy itself is automated — `.github/workflows/deploy-studio.yml` runs `sanity deploy` on every push to `main` that touches `apps/studio/**` or `apps/frontend/src/sanity/types.ts`. Merge your PR through the normal `dev` → `main` flow and both the frontend (FTP) and Studio (`*.sanity.studio`) rebuild automatically.
+
+What goes wrong if you skip `typegen`: frontend keeps building against stale types. New fields lose autocomplete and queries against them may return `undefined` at runtime without TypeScript catching it.
+
+The Studio deploy workflow requires three pieces of GitHub config (one-time, on the `production` environment): a `SANITY_DEPLOY_TOKEN` secret (generated in sanity.io/manage → API → Tokens with *Deploy Studio* permission), plus `SANITY_STUDIO_HOSTNAME` and `SANITY_STUDIO_APP_ID` variables. See `apps/studio/.env.example` for the same variables locally.
 
 ## Analytics
 
@@ -216,22 +348,16 @@ pnpm test:e2e:ui
 
 A GitHub Actions workflow (`.github/workflows/ci.yml`) runs on every pull request targeting `dev` or `main`. It performs:
 
-1. **Lint** the frontend (`pnpm --filter frontend lint`)
-2. **Build** the frontend (`pnpm --filter frontend build`)
-3. **Build** the studio (`pnpm --filter dzts-studio exec sanity build`)
+1. **Lint** the frontend (`pnpm --filter dzts-website lint`)
+2. **Unit tests** for the frontend (`pnpm --filter dzts-website test`)
+3. **Typecheck** the frontend (`pnpm --filter dzts-website exec tsc --noEmit`)
+4. **Build** the studio (`pnpm --filter dzts-studio exec sanity build`)
 
-The workflow uses placeholder environment variables so builds can compile without real Sanity/Web3Forms credentials. The studio build uses `exec sanity build` to skip the `prebuild` hook (schema extraction + typegen), which requires a live Sanity API connection.
+The frontend is typechecked rather than built here: the static export fetches Sanity content at build time, which can't run on placeholder credentials, so the full `next build` is validated in the E2E workflow instead (against the `Preview` environment's real non-prod credentials). The studio build uses placeholder env vars and `exec sanity build` to skip the `prebuild` hook (schema extraction + typegen), which requires a live Sanity API connection.
 
 ### E2E Tests
 
-A separate workflow (`.github/workflows/e2e.yml`) runs Playwright tests on PRs to `dev` or `main` when `apps/frontend/` or the workflow file changes. It builds the frontend with real Sanity credentials (from GitHub Secrets) and runs the full e2e suite.
-
-Required GitHub Secrets (Settings > Secrets and variables > Actions):
-
-| Secret | Description |
-|--------|-------------|
-| `NEXT_PUBLIC_SANITY_PROJECT_ID` | Sanity project ID (same as `.env.local`) |
-| `NEXT_PUBLIC_SANITY_DATASET` | Sanity dataset name (same as `.env.local`) |
+A separate workflow (`.github/workflows/e2e.yml`) runs Playwright tests on PRs to `dev` or `main` when `apps/frontend/` or the workflow file changes. It binds to the `Preview` GitHub Environment and builds the frontend with the non-prod Sanity credentials defined there. The required secrets (`NEXT_PUBLIC_SANITY_PROJECT_ID`, `NEXT_PUBLIC_SANITY_DATASET`) live on the `Preview` environment, not at the repo level.
 
 On failure, the HTML report and test results are uploaded as workflow artifacts for debugging.
 

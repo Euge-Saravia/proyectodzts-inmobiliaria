@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useTransition, Suspense } from "react";
 import PropertiesFilters from "./PropertiesFilters";
+import PropertiesSort from "./PropertiesSort";
 import ActiveFilterBadges from "./ActiveFilterBadges";
 import type { FilterOptions } from "@/types/filters";
 import "./PropertiesLayout.css";
@@ -18,12 +19,12 @@ export default function PropertiesLayout({
   children,
 }: PropertiesLayoutProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isFiltering, setIsFiltering] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   return (
     <Suspense fallback={<div className="bg-light rounded-3 p-4 mb-4" />}>
       <div className="properties-layout-wrapper">
-        {isFiltering && (
+        {isPending && (
           <div className="properties-loading-overlay" role="status" aria-live="polite">
             <div className="properties-loading-card">
               <div className="spinner-border text-primary" aria-hidden="true" />
@@ -43,7 +44,8 @@ export default function PropertiesLayout({
                 roomCounts={filterOptions.roomCounts}
                 isCollapsed={isCollapsed}
                 onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
-                onFilteringChange={setIsFiltering}
+                isPending={isPending}
+                startTransition={startTransition}
               />
             </div>
           </div>
@@ -52,15 +54,16 @@ export default function PropertiesLayout({
           <ActiveFilterBadges
             cities={filterOptions.cities}
             propertyTypes={filterOptions.propertyTypes}
-            onFilteringChange={setIsFiltering}
+            startTransition={startTransition}
           />
 
-            <div className="mb-3" aria-live="polite">
-              <p className="text-muted mb-0">
+            <div className="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-3">
+              <p className="text-muted mb-0" aria-live="polite">
                 {totalCount === 1
                   ? "1 propiedad encontrada"
                   : `${totalCount} propiedades encontradas`}
               </p>
+              <PropertiesSort />
             </div>
 
             {children}

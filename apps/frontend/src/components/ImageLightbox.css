@@ -5,6 +5,18 @@
   touch-action: none;
 }
 
+.lightbox-blur {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  filter: blur(16px);
+  transform: scale(1.05);
+  z-index: 0;
+  pointer-events: none;
+}
+
 .lightbox-counter {
   position: absolute;
   bottom: 1rem;

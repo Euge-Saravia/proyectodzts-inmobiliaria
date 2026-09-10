@@ -1,35 +1,31 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useTransition } from "react";
+import type { TransitionStartFunction } from "react";
 import type { FilterOption } from "@/types/filters";
 import { parseMultiple } from "@/lib/filters";
 
 interface ActiveFilterBadgesProps {
   cities: FilterOption[];
   propertyTypes: FilterOption[];
-  onFilteringChange?: (isFiltering: boolean) => void;
+  startTransition: TransitionStartFunction;
 }
 
 export default function ActiveFilterBadges({
   cities,
   propertyTypes,
-  onFilteringChange,
+  startTransition,
 }: ActiveFilterBadgesProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [isPending, startTransition] = useTransition();
 
   const appliedOperacion = searchParams.get("operacion") || "";
   const appliedPropiedad = parseMultiple(searchParams.get("propiedad"));
   const appliedLocalidad = parseMultiple(searchParams.get("localidad"));
   const appliedDormitorios = parseMultiple(searchParams.get("dormitorios"));
-
-  useEffect(() => {
-    if (onFilteringChange) {
-      onFilteringChange(isPending);
-    }
-  }, [isPending, onFilteringChange]);
+  const appliedDisponibles = searchParams.get("disponibles") === "1";
+  const appliedSupMin = searchParams.get("supmin") || "";
+  const appliedSupMax = searchParams.get("supmax") || "";
 
   const getOperacionLabel = (value: string) => {
     if (value === "venta") return "Venta";
@@ -50,6 +46,12 @@ export default function ActiveFilterBadges({
   const getDormitoriosLabel = (value: string) => {
     const count = parseInt(value, 10);
     return `${count} ${count === 1 ? "dorm." : "dorms."}`;
+  };
+
+  const getSuperficieLabel = (min: string, max: string) => {
+    if (min && max) return `${min} - ${max} m²`;
+    if (min) return `Desde ${min} m²`;
+    return `Hasta ${max} m²`;
   };
 
   const appliedFilters: { key: string; value: string; label: string; icon: string }[] = [];
@@ -85,12 +87,31 @@ export default function ActiveFilterBadges({
       icon: "bi-door-open",
     });
   });
+  if (appliedDisponibles) {
+    appliedFilters.push({
+      key: "disponibles",
+      value: "1",
+      label: "Solo disponibles",
+      icon: "bi-check-circle",
+    });
+  }
+  if (appliedSupMin || appliedSupMax) {
+    appliedFilters.push({
+      key: "superficie",
+      value: "",
+      label: getSuperficieLabel(appliedSupMin, appliedSupMax),
+      icon: "bi-rulers",
+    });
+  }
 
   const removeFilter = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
 
-    if (key === "operacion") {
+    if (key === "operacion" || key === "disponibles") {
       params.delete(key);
+    } else if (key === "superficie") {
+      params.delete("supmin");
+      params.delete("supmax");
     } else {
       const current = parseMultiple(params.get(key));
       const updated = current.filter((v) => v !== value);

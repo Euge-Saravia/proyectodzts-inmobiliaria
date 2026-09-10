@@ -1,15 +1,21 @@
 interface MapSectionProps {
   address?: string | null;
+  embedUrl?: string | null;
   title: string;
+  id?: string;
 }
 
-export default function MapSection({ address, title }: MapSectionProps) {
-  if (!address) return null;
+export default function MapSection({ address, embedUrl, title, id }: MapSectionProps) {
+  const mapSrc = embedUrl
+    ? embedUrl
+    : address
+      ? `https://www.google.com/maps?q=${encodeURIComponent(address)}&output=embed`
+      : null;
 
-  const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(address)}&output=embed`;
+  if (!mapSrc) return null;
 
   return (
-    <div className="w-100">
+    <div className="w-100" id={id} style={id ? { scrollMarginTop: "60px" } : undefined}>
       <div style={{ width: "100%", height: "450px" }}>
         <iframe
           src={mapSrc}

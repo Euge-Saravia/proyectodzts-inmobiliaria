@@ -1,5 +1,5 @@
 import { defineField, defineType } from "sanity";
-import { TagsIcon } from "@sanity/icons";
+import { TagsIcon } from "@sanity/icons/Tags";
 
 export const propertyTypeCategoryType = defineType({
   name: "propertyTypeCategory",

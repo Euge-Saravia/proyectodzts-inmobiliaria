@@ -1,13 +1,10 @@
 import { defineQuery } from "next-sanity";
-import { cacheLife, cacheTag } from "next/cache";
-import type { SanityImageSource } from "@sanity/image-url";
 import { sanityFetch } from "@/sanity/lib/live";
+import type { FEATURED_QUERY_RESULT } from "@/sanity/types";
 import PropertyCard from "./PropertyCard";
 
-const FEATURED_QUERY = defineQuery(`*
-  [_type == "property" && featured == true && !(status in ["vendido", "alquilado"])]
-  | order(publishedAt desc)[0...6]
-  {
+const FEATURED_QUERY = defineQuery(`
+  *[_type == "homePage"][0].featuredProperties[]->{
     _id,
     title,
     "slug": slug.current,
@@ -15,33 +12,29 @@ const FEATURED_QUERY = defineQuery(`*
     price,
     currency,
     operationType,
+    status,
+    published,
     rooms,
     "city": city->name,
     "image": images[0] { asset->{ _id, url, metadata { lqip } } }
   }`);
-
-interface FeaturedProperty {
-  _id: string;
-  title: string | null;
-  slug: string | null;
-  subtitle: string | null;
-  price: number | null;
-  currency: string | null;
-  operationType: string | null;
-  rooms: number | null;
-  city: string | null;
-  image: { asset: { _id: string; url: string; metadata: { lqip: string } } | null } | null;
-}
 
 export default async function FeaturedProperties({
   heading,
 }: {
   heading: string;
 }) {
-  "use cache";
-  cacheLife("minutes");
-  cacheTag("property");
-  const { data: properties } = await sanityFetch({ query: FEATURED_QUERY }) as { data: FeaturedProperty[] };
+  const { data } = (await sanityFetch({ query: FEATURED_QUERY })) as {
+    data: FEATURED_QUERY_RESULT | null;
+  };
+
+  // Preserve the manual order and the author's selection from the Studio.
+  // Only hide unpublished properties (they have no detail page, so their card
+  // would link to a 404); sold/rented featured properties still show, with
+  // their status ribbon.
+  const properties = (data ?? [])
+    .filter((property) => property.published !== false)
+    .slice(0, 6);
 
   return (
     <div className="container py-4">
@@ -60,6 +53,7 @@ export default async function FeaturedProperties({
                 price={property.price}
                 currency={property.currency}
                 operationType={property.operationType}
+                status={property.status}
                 image={property.image}
                 lqip={property.image?.asset?.metadata?.lqip}
                 rooms={property.rooms}

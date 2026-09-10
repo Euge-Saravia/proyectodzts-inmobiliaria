@@ -1,5 +1,7 @@
 import type { StructureResolver } from "sanity/structure";
-import { CogIcon, DocumentsIcon, HomeIcon } from "@sanity/icons";
+import { CogIcon } from "@sanity/icons/Cog";
+import { DocumentsIcon } from "@sanity/icons/Documents";
+import { HomeIcon } from "@sanity/icons/Home";
 
 const SINGLETONS = ["siteSettings", "homePage", "propiedadesPage"];
 

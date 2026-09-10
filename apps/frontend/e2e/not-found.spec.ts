@@ -19,6 +19,6 @@ test.describe("404 Page", () => {
 
   test('"Ver propiedades" navigates to /propiedades', async ({ page }) => {
     await page.click("a:has-text('Ver propiedades')");
-    await expect(page).toHaveURL(/\/propiedades$/);
+    await expect(page).toHaveURL(/\/propiedades\/?$/);
   });
 });

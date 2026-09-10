@@ -1,5 +1,5 @@
 import { defineField, defineType } from "sanity";
-import { DocumentsIcon } from "@sanity/icons";
+import { DocumentsIcon } from "@sanity/icons/Documents";
 
 export const propiedadesPageType = defineType({
   name: "propiedadesPage",
