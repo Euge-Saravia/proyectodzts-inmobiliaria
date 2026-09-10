@@ -45,6 +45,6 @@
     "eslint-plugin-react": "^7.37.5",
     "serve": "^14.2.4",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.10"
+    "vitest": "^5.0.0"
   }
 }
